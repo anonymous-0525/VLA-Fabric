@@ -1,0 +1,19 @@
+agent_count: 3
+agent_group:
+  - 0
+  - 1
+  - 2
+role_data_parallel_groups:
+  - [0]
+  - [1]
+  - [2]
+selected_operating_point:
+  team_microbatch: 6
+  gradient_accumulation: 3
+  global_team_batch: 18
+  validation_status: validated
+  maximum_process_peak_mib: 33318
+  gpu_memory_mib: 49140
+  stage1_steps: 10000
+  stage2_steps: 50000
+xla_preallocate: false
