@@ -40,7 +40,7 @@ pi05/external/
 *.safetensors
 *.orig
 
-# Local publication and media-production tools are not research artifacts.
+# Local publication and media-production workspace.
 /local-maintenance/
 /site-src/
 /scripts/

@@ -388,8 +388,8 @@ class ThreeArmTriangleInsertion(ManipulationEnv):
             # The Panda pad geoms cover only the innermost fingertip faces. During
             # cooperative transport a handle can remain physically pinched between
             # both finger links while one tiny pad geom momentarily loses contact.
-            # Require real contact from both complete fingers instead of treating
-            # that pad-only flicker as a dropped grasp.
+            # Measure grasp contact across both complete finger links to include
+            # these physically supported transport configurations.
             arm_grasps = []
             for gripper in robot.gripper.values():
                 finger_groups = (

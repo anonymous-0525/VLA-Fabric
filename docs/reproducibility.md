@@ -1,7 +1,7 @@
 # Reproducibility Protocol
 
-This document records the frozen protocols represented by the public configs.
-It does not include paper result tables or checkpoints.
+This guide describes the architecture matrix, fine-tuning recipes, and paired
+evaluation protocols implemented by the experiment configurations.
 
 ## Part I: Eagle interaction study
 
@@ -22,10 +22,9 @@ and seven Common-first models:
 
 Single-stage trains the complete configured interaction directly. Common-first
 trains the Common path for 10k updates, then starts a fresh optimizer, schedule,
-and RNG for a 40k full-interaction stage. I0 and I1 are shared controls because
-they do not define a Common-first transition. The selected I4-RAW and I5-RAW
-families have targeted 100k follow-ups; these follow-ups do not reopen the
-architecture search.
+and RNG for a 40k full-interaction stage. I0 and I1 serve as shared Single-stage
+controls. The selected I4-RAW and I5-RAW families also have targeted 100k
+follow-ups that examine extended fine-tuning of these architectures.
 
 Machine-readable matrices are under `eagle/configs/matrix/`, and every released
 run has a YAML under `eagle/configs/runs/`.
@@ -42,11 +41,10 @@ moving them to backbone-native boundaries:
 
 The protocol uses prediction horizon 50, execution horizon 25, and 10 flow
 steps. The original Common-first recipe uses four training processes with global
-batch 12. Stage 1 runs
-10k updates; Stage 2 loads Stage-1 model weights and runs 40k updates with all
-three functions enabled. This is one fine-tuning recipe, not a requirement of
-the interaction architecture; the trainer also supports Full single-stage and
-independent fine-tuning. Exact settings for this recipe are in
+batch 12. Stage 1 runs 10k updates; Stage 2 loads Stage-1 model weights and runs
+40k updates with all three functions enabled. The trainer supports Common-first,
+Full single-stage, and independent fine-tuning. Exact settings for the
+Common-first recipe are in
 `pi05/configs/training/pi_native_v2_h50_4gpu.yaml`.
 
 ## Part III: multi-arm extension
@@ -78,10 +76,3 @@ condition ID. The evaluator rejects missing IDs, duplicates, non-finite outputs,
 and unexpected checkpoint metadata. See `configs/evaluation/paired200.yaml` in
 each package for the machine-readable protocol. Larger-team and RoboTwin tasks
 use their task-specific condition ranges and evaluation configurations.
-
-## External artifacts
-
-Datasets, pretrained weights, and simulator assets must be obtained separately;
-see [datasets.md](datasets.md) and [installation.md](installation.md). Training
-outputs and rollout archives are not bundled. Communication-efficiency/NSPR
-experiments are outside the scope of this repository.

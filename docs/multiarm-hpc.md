@@ -1,6 +1,6 @@
 # Multi-Arm pi0.5 Workflows on a Single-Node HPC
 
-This release extends the pi0.5 VLA-Fabric implementation from two agents to one complete policy process per arm for three- and four-arm tasks. It supports a single host only: each agent rank owns one GPU, local observations, one role checkpoint shard, and one local action chunk. Cross-rank collectives carry only the configured Common, Private Prefix K/V, and peer-action representations.
+The pi0.5 VLA-Fabric multi-arm workflows assign one complete policy process per arm on a single host. Each agent rank owns one GPU, local observations, one role checkpoint shard, and one local action chunk. Cross-rank collectives carry the configured Common, Private Prefix K/V, and peer-action representations.
 
 ## Task Configurations
 
@@ -10,11 +10,9 @@ This release extends the pi0.5 VLA-Fabric implementation from two agents to one 
 | 4 agents | Frame Insertion | `pi05/configs/multiarm/four_arm_frame_insertion.yaml` |
 | 4 agents | Arch Assembly | `pi05/configs/multiarm/four_arm_arch_assembly.yaml` |
 
-The code does not claim cross-node execution. Datasets, base checkpoints, MuJoCo assets, RoboFactory, robosuite, logs, and trained role checkpoints are external artifacts.
-
 ## Environment
 
-Install OpenPI and this package as described in `docs/installation.md`. Copy `pi05/scripts/multiarm/env.example` to a private shell file, fill in paths, and source it. `GPU_IDS` is mandatory and has no default; the launchers never choose GPU 0 or any other device implicitly.
+Install OpenPI and this package as described in `docs/installation.md`. Use `pi05/scripts/multiarm/env.example` to configure the dataset, model, simulator, and output paths. Set `GPU_IDS` explicitly to the devices allocated to the run.
 
 ```bash
 export OPENPI_ROOT=/path/to/openpi
@@ -100,7 +98,7 @@ export STAGE1_CHECKPOINT=$OUTPUT_ROOT/four_arm_stage1_common_10k/checkpoints/ste
 pi05/scripts/multiarm/train_four_arm_stage2.sh
 ```
 
-For evaluation, set `FOUR_ARM_ENV_PYTHON`, `MULTIARM_ENV_ROOT`, and `ROBOSUITE_ROOT`. The included `four_arm_env_server.py` provides IPC only; the task environment and assets remain external.
+For evaluation, set `FOUR_ARM_ENV_PYTHON`, `MULTIARM_ENV_ROOT`, and `ROBOSUITE_ROOT`. The `four_arm_env_server.py` entry point connects policy evaluation to the configured task environment through local IPC.
 
 ```bash
 export CHECKPOINT=/path/to/complete/team/checkpoint
@@ -112,7 +110,7 @@ pi05/scripts/multiarm/evaluate_four_arm.sh
 
 ## CPU Verification
 
-These checks do not use a physical GPU:
+Run the tests with CPU-backed JAX devices:
 
 ```bash
 XLA_FLAGS=--xla_force_host_platform_device_count=4 \

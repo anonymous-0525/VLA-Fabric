@@ -15,12 +15,10 @@ continuation contracts, RoboTwin adapters, and inference path-removal profiles.
 The shared N-agent core and focused three- and four-arm task workflows are
 included under `scripts/multiarm`; `scripts/*_multiarm_frame.py` covers the
 additional three-arm frame and independently trained frame controls.
-Internal cluster scheduling scripts are excluded.
 
 ## External dependencies
 
 Install OpenPI separately and expose its source tree through `OPENPI_ROOT`.
-The release does not vendor or modify OpenPI.
 
 ```bash
 export OPENPI_ROOT=/path/to/openpi
@@ -38,9 +36,8 @@ Dataset conversion expects the ALOHA RLDS data described in
 The original bimanual protocol uses four processes, one GPU per process, with global batch
 12. Stage 1 trains Raw Common for 10k optimizer updates. Stage 2 loads only the
 Stage-1 model weights, initializes a fresh optimizer/schedule/RNG, enables all
-three interactions, and trains for 40k updates. This is one reported recipe,
-not a requirement of the interaction architecture. Full single-stage and
-independent modes are selectable in `scripts/train_dual_pi05.py`.
+three interactions, and trains for 40k updates. Full single-stage and independent
+fine-tuning are also available in `scripts/train_dual_pi05.py`.
 
 ```bash
 cd pi05
@@ -74,19 +71,22 @@ CUDA_VISIBLE_DEVICES="$GPU_ID" ./scripts/evaluate_paired200.sh \
 The multi-agent extension uses one process and one complete local policy per arm.
 See [`docs/multiarm-hpc.md`](../docs/multiarm-hpc.md) for StackCube, Frame
 Insertion, Arch Assembly, dataset preparation, training, and
-strict evaluation. GPU IDs are always explicit; no multi-arm launcher has a
-default device group. Select a microbatch that fits the allocated devices and
+strict evaluation. Set GPU IDs explicitly to the allocated devices. Select a
+microbatch that fits those devices and
 adjust accumulation to preserve the effective team batch.
 
-## Tests
+## RoboTwin Evaluation
 
 RoboTwin conversion and evaluation use the standalone CLIs
 `convert_robotwin2_rlds.py`, `prepare_robotwin2_conditions.py`,
 `serve_robotwin2_pi05.py`, and `evaluate_robotwin2_pi05.py` in `scripts/`.
 Use `--help` for explicit dataset, checkpoint, and environment locations.
-Inference removals (`no_common`, `no_private`, `core`, `all_off`) reuse the Full
-checkpoint; they are not independently trained baselines. Local IPC is intended
-only for mutually trusted processes, not an internet-facing inference service.
+Inference removals (`no_common`, `no_private`, `core`, `all_off`) evaluate the
+Full checkpoint with fixed weights and the selected interaction paths disabled.
+Run the local IPC service within a trusted environment and restrict access to
+the collaborating evaluation processes.
+
+## Tests
 
 ```bash
 XLA_FLAGS=--xla_force_host_platform_device_count=4 \

@@ -1,8 +1,7 @@
 # Installation
 
-The Eagle and pi0.5 implementations use different dependency stacks. Install
-them in separate Python environments to avoid incompatible PyTorch/JAX and
-Transformers requirements.
+The Eagle and pi0.5 implementations each use a dedicated Python environment
+with their corresponding PyTorch/JAX and Transformers dependencies.
 
 ## Eagle2/OpenVLA environment
 
@@ -21,9 +20,8 @@ python -m pip install -e './eagle[dev]'
 ```
 
 Install the upstream libraries independently and expose their import paths.
-`TWINVLA_ROOT` can point to any checkout location; the source packages do not
-require the original experiment-directory hierarchy. The example run YAMLs use
-`eagle/external/` as convenient placeholders, which can be changed:
+Set `TWINVLA_ROOT` to the upstream checkout and configure the model, dataset,
+and simulator paths in the run YAML. The examples use this layout:
 
 ```text
 eagle/external/TwinVLA-base/
@@ -35,8 +33,6 @@ eagle/external/tabletop_sim/
 export TWINVLA_ROOT=/path/to/TwinVLA
 export PYTHONPATH="$TWINVLA_ROOT:${PYTHONPATH:-}"
 ```
-
-The release never edits these upstream trees.
 
 ## pi0.5/OpenPI environment
 
@@ -58,7 +54,7 @@ python -m pip install -e ./pi05
 export OPENPI_ROOT=/path/to/openpi
 ```
 
-Expected local-only locations are:
+Example model and dataset locations:
 
 ```text
 pi05/external/pi05_base/
@@ -66,19 +62,17 @@ pi05/data/converted/aloha_handover_box/
 pi05/data/converted/aloha_shoes_table/
 ```
 
-These directories are ignored by Git.
-
 For multi-arm execution, install the external task environment in a separate
 compatible environment. StackCube requires RoboFactory and its IPC server
 configuration. Frame Insertion and Arch Assembly require the released
 `multiarm_sim` task package (`pip install -e ./simulation`), robosuite, MuJoCo assets, and an EGL-capable Python
 environment. Their paths are passed through the variables documented in
-[`multiarm-hpc.md`](multiarm-hpc.md); upstream simulators and robot assets are not vendored here.
+[`multiarm-hpc.md`](multiarm-hpc.md).
 
-## Verification without accelerators
+## CPU Verification
 
-The protocol tests can run on CPU. Eagle tests do not load the external model.
-pi0.5 tests require the OpenPI Python sources because they validate the actual
+Run the protocol tests on CPU. Eagle tests cover configuration, interaction, and
+evaluation utilities; pi0.5 tests use the OpenPI Python sources to validate the
 model boundary.
 
 ```bash

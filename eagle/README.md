@@ -22,7 +22,7 @@ are:
 Common-first runs train Common interaction for 10k updates before enabling the
 remaining channels in a separately initialized 40k Stage 2. The selected
 I4-RAW Linear and I5-RAW Transformer families also have 100k follow-up
-configurations; the follow-up does not reopen the AVG/RAW architecture search.
+configurations for extended fine-tuning.
 
 ## External Dependencies
 

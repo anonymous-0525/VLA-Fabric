@@ -55,9 +55,8 @@ _ROLE_TASKS: Mapping[str, RoleTaskDefinition] = {
     task.task_id: task for task in (F1, F2, F3, F4, T1, F5)
 }
 ROLE_TASK_IDS = tuple(_ROLE_TASKS)
-# These tasks retain the original phase-keyframe semantic preview path. F5 is
-# intentionally excluded because it has a dedicated real-contact environment
-# and expert whose completion length is closed-loop rather than phase-fixed.
+# These tasks use phase-keyframe semantic previews. F5 uses its dedicated
+# real-contact environment and expert with closed-loop completion timing.
 SEMANTIC_PREVIEW_TASK_IDS = tuple(
     task_id for task_id in ROLE_TASK_IDS if task_id != "f5_cooperative_loading"
 )

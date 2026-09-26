@@ -1,4 +1,6 @@
-# VLA-Fabric: ICLR 2027 Code Release
+# VLA-Fabric
+
+**How Should VLA Agents Interact? Learning Multi-Arm Coordination with VLA-Fabric**
 
 Project page: https://anonymous-0525.github.io/VLA-Fabric/
 
@@ -8,7 +10,7 @@ the resulting interaction functions in a structurally different VLA backbone,
 and extending the same one-arm-one-agent organization to three- and four-arm
 tasks.
 
-## Released implementations
+## Implementations
 
 | Directory | Backbone | Purpose |
 |---|---|---|
@@ -21,11 +23,10 @@ Both implementations preserve one-arm-one-agent ownership: each policy receives
 its local observation and produces its local action. Peer information crosses
 only the interaction boundaries defined by the experiment configuration.
 
-The release includes StackCube, three-/four-arm frame tasks, Arch Assembly,
+The code covers StackCube, three-/four-arm frame tasks, Arch Assembly,
 RoboTwin bimanual task adapters, independently trained controls, and inference
-path removals. It excludes checkpoints, raw datasets, complete rollout archives,
-internal cluster queues, and the communication-efficiency/NSPR
-implementation studied separately.
+path removals. The project website presents the architecture, experimental
+results, and simulation and physical-robot videos.
 
 ## Quick start
 
@@ -46,15 +47,6 @@ python -m pytest -q tests
 
 Backbone-specific tests are documented in [`eagle/README.md`](eagle/README.md)
 and [`pi05/README.md`](pi05/README.md).
-
-## Repository status
-
-This is a core-code research release. The project page
-shows selected, completed evaluations; it is not a model zoo. Model weights,
-datasets, and complete rollout archives are not bundled. Paths in the
-checked-in YAML files are portable placeholders rather than references to
-the authors' machines. Hardware drivers and device registration are intentionally
-separate from the portable data and policy interfaces.
 
 ## License
 

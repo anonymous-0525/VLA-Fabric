@@ -1,7 +1,8 @@
 # Datasets
 
-The released two-agent experiments use the ALOHA `Handover Box` and `Shoes
-Table` tasks. Raw data and simulator assets are not redistributed.
+The ALOHA two-agent experiments use the `Handover Box` and `Shoes Table` tasks.
+This guide describes their observation/action layout and the multi-arm data
+interfaces.
 
 ## Observation and action ownership
 
@@ -14,8 +15,9 @@ role order into two 10-dimensional local actions:
 | Left | global camera, left wrist, left proprioception | action dimensions 0--9 |
 | Right | global camera, right wrist, right proprioception | action dimensions 10--19 |
 
-Raw peer observations are never added to the local policy input. Coordination
-uses only the configured intermediate interaction paths.
+Each policy receives the shared global view and its own wrist and proprioceptive
+observations. Peer information enters through the configured intermediate
+interaction paths.
 
 ## Eagle layout
 
@@ -50,9 +52,8 @@ cd pi05
 python scripts/generate_pi05_v2_quantile_stats.py --help
 ```
 
-Dataset provenance, conversion commands, and licenses should be recorded by
-users alongside their local data; absolute machine paths are intentionally not
-stored in this repository.
+Record dataset provenance, conversion commands, and licenses alongside the
+converted data.
 
 ## Multi-arm layouts
 
@@ -63,5 +64,5 @@ aligned trajectories; conversion produces role-specific q01/q99 statistics.
 The four-agent tasks use one shared `agentview`, four role-local wrist streams,
 9-D local state, and 7-D local actions. Only training-ready, success-only source
 releases with four aligned roles are accepted. `frontview`, when present, is
-audit-only and is not exposed to the policy. Conversion and quantile commands
+used exclusively for data auditing. Conversion and quantile commands
 are documented in [`multiarm-hpc.md`](multiarm-hpc.md).

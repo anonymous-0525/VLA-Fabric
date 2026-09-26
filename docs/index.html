@@ -27,7 +27,7 @@
     <section id="method" class="section overview" aria-labelledby="method-title"><div class="wrap">
       <p class="eyebrow">How Should VLA Agents Interact?</p>
       <h2 id="method-title">From one joint policy<br>to interacting local policies.</h2>
-      <p class="lead">A stronger individual policy does not automatically provide an interface for collaboration. VLA-Fabric makes the complete, arm-local VLA the unit of coordination: each agent retains its observations and action generation, while learned internal representations connect it to its peers.</p>
+      <p class="lead">VLA-Fabric establishes a learnable collaboration interface between complete, arm-local VLA policies. Each agent retains its observations and action generation, while learned internal representations connect it to its peers.</p>
       <figure><button class="figure-zoom" aria-label="Enlarge VLA-Fabric overview"><img src="static/figures/roadmap.webp" loading="lazy" decoding="async" width="2400" height="1302" alt="Centralized, high-level, implicit, and explicit coordination; VLA-Fabric research overview"><span><i data-lucide="expand"></i></span></button><figcaption>Local observation and action ownership, with explicit interaction during policy computation.</figcaption></figure>
     </div></section>
     <nav class="chapter-nav" aria-label="Research chapters"><div class="wrap">
@@ -42,14 +42,14 @@
       <div class="figure-heading"><h3>Architecture and adaptation, considered together.</h3><p>32 runs across Handover Box and Shoes Table.</p></div>
       <figure class="study-figure"><button class="figure-zoom" aria-label="Enlarge controlled architecture study"><img src="static/figures/interaction-study.webp" loading="lazy" decoding="async" width="2400" height="1981" alt="Architecture study comparing Single-stage and Common-first adaptation, development and disjoint paired evaluation, and selected 100k follow-ups"><span><i data-lucide="expand"></i></span></button><figcaption>200 development conditions and 200 disjoint paired evaluation conditions. Gold bars mark the targeted 100k RAW follow-up.</figcaption></figure>
       <div class="findings">
-        <div><span>Interaction entry</span><h3>More information is not enough.</h3><p>Private K/V supplies useful peer context. Common and action-side interaction can provide further gains, but simply exposing additional channels does not ensure that policies learn to use them.</p></div>
-        <div><span>Adaptation</span><h3>The learning recipe matters.</h3><p>Common-first improves the matched SingleVLA configurations. It includes additional initialization updates; the benefit is not an equal-compute claim about learning order, nor a requirement for every backbone.</p></div>
-        <div><span>A reusable realization</span><h3>Functions over a task-specific peak.</h3><p>Neither Common aggregation nor action fusion wins on every task. RAW Common, Private K/V, and Linear readout fusion form the canonical SingleVLA realization carried forward.</p></div>
+        <div><span>Interaction entry</span><h3>Interaction structure shapes coordination.</h3><p>Private K/V supplies useful peer context. The architecture study examines how Common aggregation, action-side interaction, and adaptation shape the use of peer information.</p></div>
+        <div><span>Adaptation</span><h3>The learning recipe matters.</h3><p>Common-first combines an additional Common-path initialization stage with full-interaction fine-tuning and improves the matched SingleVLA configurations. Fine-tuning recipes are adapted to each backbone.</p></div>
+        <div><span>A reusable realization</span><h3>Reusable coordination functions.</h3><p>The tasks reveal different preferences for Common aggregation and action fusion. RAW Common, Private K/V, and Linear readout fusion form the canonical SingleVLA realization carried forward.</p></div>
       </div>
     </div></section>
 
     <section id="transfer" class="section chapter transfer" aria-labelledby="transfer-title"><div class="wrap">
-      <div class="section-heading"><div><p class="eyebrow">02 / Cross-backbone transfer</p><h2 id="transfer-title">The same functions.<br>Different implementations.</h2></div><p>The transfer is in the coordination principle, not the learned weights. We re-instantiate it in homogeneous π<sub>0.5</sub> teams with different internal computation.</p></div>
+      <div class="section-heading"><div><p class="eyebrow">02 / Cross-backbone transfer</p><h2 id="transfer-title">The same functions.<br>Different implementations.</h2></div><p>We transfer the coordination principle through backbone-specific implementations and fine-tuning in homogeneous π<sub>0.5</sub> teams.</p></div>
       <figure><button class="figure-zoom" aria-label="Enlarge cross-backbone architecture"><img src="static/figures/architecture-transfer.webp" loading="lazy" decoding="async" width="2400" height="1895" alt="SingleVLA readout interaction and pi0.5 prefix and Action Expert interaction"><span><i data-lucide="expand"></i></span></button><figcaption>Both realizations generate continuous actions locally. SingleVLA fuses readouts before its local action sampler; π<sub>0.5</sub> exchanges evolving states within the Action Expert.</figcaption></figure>
       <div class="findings roles">
         <div><span>Common</span><h3>Shared context</h3><p>Common representations form shared context within the VLM or multimodal prefix.</p></div>
@@ -59,7 +59,7 @@
       <div class="evidence-block"><div class="figure-heading"><h3>Bimanual capability</h3><p>Task success (%)</p></div>
         <div class="table-scroll"><table><caption class="sr-only">Bimanual capability across four tasks</caption><thead><tr><th scope="col">Policy</th><th scope="col">Handover Box</th><th scope="col">Shoes Table</th><th scope="col">Handover Mic</th><th scope="col">Scan Object</th></tr></thead>
         <tbody><tr><th scope="row">RDT-1B</th><td>69.4</td><td>66.0</td><td>90.0</td><td>4.0</td></tr><tr><th scope="row">π<sub>0</sub></th><td>78.8</td><td>82.4</td><td>98.0</td><td>18.0</td></tr><tr><th scope="row">TwinVLA</th><td>78.0</td><td>84.8</td><td>84.0</td><td>11.0</td></tr><tr class="family-start"><th scope="row">SingleVLA-Fabric</th><td>80.0</td><td>70.0</td><td>84.0</td><td aria-label="Not reported">—</td></tr><tr class="featured"><th scope="row">π<sub>0.5</sub>-Fabric</th><td>80.5</td><td>94.5</td><td>97.5</td><td>33.0</td></tr></tbody></table></div>
-        <p class="media-note">External values follow the manuscript: <a href="https://openreview.net/forum?id=jG9W6nAwVz">TwinVLA</a> for Box/Shoes and TwinVLA Mic/Scan; the <a href="https://robotwin-platform.github.io/leaderboard.html">RoboTwin leaderboard</a> for RDT-1B and π<sub>0</sub> on Mic/Scan. These are published values, not local re-runs. Fabric rows use 200 conditions per task. Differences in pretraining and protocols make this a system-capability comparison, not an isolated estimate of interaction gains.</p>
+        <p class="media-note">External results are taken from <a href="https://openreview.net/forum?id=jG9W6nAwVz">TwinVLA</a> for Box/Shoes and TwinVLA Mic/Scan, and from the <a href="https://robotwin-platform.github.io/leaderboard.html">RoboTwin leaderboard</a> for RDT-1B and π<sub>0</sub> on Mic/Scan. Fabric rows use 200 conditions per task. The table compares complete systems with their respective pretraining and evaluation protocols.</p>
       </div>
       <div class="evidence-block"><div class="figure-heading"><h3>Which interactions do trained policies use?</h3><p>Fixed-weight inference removals</p></div>
         <div class="diagnostic-grid">
@@ -70,12 +70,12 @@
           <tr class="featured"><th scope="row">Full</th><td>79.0</td><td>94.5</td><td>97.5</td><td>33.0</td></tr><tr><th scope="row">w/o Common</th><td>67.0</td><td>93.5</td><td>99.0</td><td>27.5</td></tr><tr><th scope="row">w/o Private K/V</th><td>78.5</td><td>93.5</td><td>11.0</td><td>4.0</td></tr><tr><th scope="row">w/o action</th><td>59.0</td><td>87.0</td><td>98.0</td><td>19.0</td></tr><tr><th scope="row">All-off</th><td>12.5</td><td>85.0</td><td>1.0</td><td>1.0</td></tr>
           </tbody></table></div>
         </div>
-        <p class="media-note">Each removal uses its own batch's Full reference above, over 200 conditions per setting. All-off disables the three paths in a trained Full policy; it is not a separately trained Independent baseline.</p>
+        <p class="media-note">Each removal uses its own batch's Full reference above, over 200 conditions per setting. All-off is a fixed-weight inference ablation that disables all three interaction paths in the trained Full policy.</p>
         <p class="result-reading">The importance of peer information depends on the task. Action interaction has a strong effect on Box, while Private K/V matters most for π<sub>0.5</sub> on Mic and Scan. Shoes is more robust to individual removals.</p>
       </div>
       <div class="evidence-block shared"><div class="figure-heading"><h3>One role checkpoint, multiple tasks.</h3><p>Shared multi-task fine-tuning</p></div>
         <div class="table-scroll"><table><caption class="sr-only">Shared pi0.5 development results</caption><thead><tr><th scope="col">Policy</th><th scope="col">Box</th><th scope="col">Shoes</th><th scope="col">Mic</th><th scope="col">Scan</th></tr></thead><tbody><tr class="featured"><th scope="row">Shared π<sub>0.5</sub>-Fabric</th><td>69.0</td><td>78.0</td><td>97.0</td><td>40.0</td></tr></tbody></table></div>
-        <p class="media-note">The same checkpoint per role serves all four tasks. These are development results under the shared-policy protocol, not the single-task evaluation split or unseen-task generalization.</p>
+        <p class="media-note">The same checkpoint per role serves all four tasks. Success rates are measured on the shared-policy development conditions.</p>
       </div>
     </div></section>
 
@@ -86,7 +86,7 @@
         <div class="simulation-grid" id="simulation-grid"></div>
         <p class="media-note">Task illustrations from recorded trajectories; quantitative policy evaluations are reported separately below.</p>
         <div class="table-scroll compact-results"><table><caption>Larger-team simulation · π<sub>0.5</sub> · 200 conditions per setting</caption><thead><tr><th scope="col">Policy</th><th scope="col">Stack3</th><th scope="col">Frame3</th><th scope="col">Frame4</th><th scope="col">Arch4</th></tr></thead><tbody><tr><th scope="row">Independent</th><td>90.5</td><td>67.5</td><td>9.5</td><td>0.0</td></tr><tr class="featured"><th scope="row">VLA-Fabric Full</th><td>91.0</td><td>79.5</td><td>89.5</td><td>5.0</td></tr></tbody></table></div>
-        <p class="result-reading">Explicit interaction provides the largest gain when local actions tightly constrain one another, as in four-arm frame alignment. Stack Cube is comparatively decomposable; reliable multi-stage Arch Building remains difficult for both settings.</p>
+        <p class="result-reading">Four-arm frame alignment shows the largest Full–Independent gap. Stack Cube supports comparable success under both settings; Arch Building probes multi-stage structural assembly.</p>
       </div>
       <div id="physical" class="subsection physical"><div class="figure-heading"><div><p class="eyebrow">Physical robots</p><h3>Coordination across local views.</h3></div><p>Three- and four-arm systems</p></div>
         <div id="physical-grid" class="physical-grid"></div>

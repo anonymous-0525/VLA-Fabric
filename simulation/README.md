@@ -16,7 +16,7 @@ python -m pip install -e ./simulation
 
 The package contains project-owned environments, scripted demonstration
 controllers, success checks, and HDF5 recording utilities. Robot models and
-physics are provided by separately installed robosuite/MuJoCo, not vendored here.
+physics are provided by robosuite/MuJoCo.
 The three-agent StackCube workflow in `pi05/` uses a separate RoboFactory
 environment; its external dependency is documented in `docs/multiarm-hpc.md`.
 
@@ -24,8 +24,5 @@ Frame policy adapters and CLIs are in `pi05/src/pi05_fabric/data/multiarm_frame_
 and `pi05/scripts/{convert,train,evaluate}_multiarm_frame.py`. All dataset,
 checkpoint, and simulator paths are supplied by the caller. The evaluation CLI
 can run the environment in a separate Python environment via its local IPC
-server. Do not expose the pickle-based local IPC endpoint to untrusted clients.
-
-These environments reproduce task mechanics, not a complete result from an
-untrained policy. Dataset and checkpoint downloads are separate from this code
-release.
+server. Restrict the pickle-based IPC endpoint to trusted local evaluation
+processes.
