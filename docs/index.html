@@ -5,9 +5,17 @@
   <meta name="theme-color" content="#0b1012">
   <meta name="description" content="VLA-Fabric: discovering, transferring, and scaling learned interaction between complete local VLA policies.">
   <title>VLA-Fabric | Learning Multi-Arm Coordination</title>
-  <link rel="stylesheet" href="static/site.css?v=4"><link rel="icon" href="data:,">
   <link rel="preload" as="image" href="static/figures/scene-poster.webp" fetchpriority="high">
-  <script type="module" src="static/app.js?v=4"></script>
+  <link rel="modulepreload" href="static/chunks/hero-6PNAN6WR.js">
+  <script>
+    const scenePreload = document.createElement('link');
+    scenePreload.rel = 'preload'; scenePreload.as = 'fetch';
+    scenePreload.crossOrigin = 'anonymous'; scenePreload.fetchPriority = 'high';
+    scenePreload.href = 'static/models/four-arm.glb' + ('DecompressionStream' in window ? '.gz' : '');
+    document.head.append(scenePreload);
+  </script>
+  <link rel="stylesheet" href="static/site.css?v=4"><link rel="icon" href="data:,">
+  <script type="module" src="static/app.js?v=5"></script>
   <noscript><style>.scene-status{display:none}</style></noscript>
 </head>
 <body>
