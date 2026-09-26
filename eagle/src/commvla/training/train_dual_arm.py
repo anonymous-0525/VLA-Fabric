@@ -30,10 +30,10 @@ if TYPE_CHECKING:
 
 
 def add_project_paths(project_root: Path) -> None:
-    for path in [
-        project_root / "code" / "src",
-        project_root / "external" / "TwinVLA",
-    ]:
+    paths = [Path(__file__).resolve().parents[2]]
+    if os.environ.get("TWINVLA_ROOT"):
+        paths.append(Path(os.environ["TWINVLA_ROOT"]).expanduser())
+    for path in paths:
         path_str = str(path)
         if path_str not in sys.path:
             sys.path.insert(0, path_str)

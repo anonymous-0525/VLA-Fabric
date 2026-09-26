@@ -3,7 +3,7 @@ from pathlib import Path
 from scripts.audit_release import audit_tree
 
 
-def test_audit_rejects_internal_robotwin2_modules(tmp_path: Path) -> None:
+def test_audit_accepts_released_robotwin2_modules(tmp_path: Path) -> None:
     module = (
         tmp_path
         / "pi05"
@@ -15,5 +15,4 @@ def test_audit_rejects_internal_robotwin2_modules(tmp_path: Path) -> None:
     module.parent.mkdir(parents=True)
     module.write_text("VALUE = 1\n", encoding="utf-8")
 
-    assert any("forbidden out-of-scope module" in item for item in audit_tree(tmp_path))
-
+    assert audit_tree(tmp_path) == []

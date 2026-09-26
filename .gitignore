@@ -1,4 +1,6 @@
 .worktrees/
+node_modules/
+site-checks/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -31,4 +33,3 @@ pi05/external/
 *.pth
 *.safetensors
 *.orig
-

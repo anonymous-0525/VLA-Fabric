@@ -28,8 +28,12 @@ class DualPi05Mode(str, Enum):
     PI_NATIVE_RAW_COMMON_ONLY = "pi_native_raw_common_only"
     PI_NATIVE_CORE = "pi_native_core"
     PI_NATIVE_THREE_PATH = "pi_native_three_path"
+    PI_NATIVE_V2_INDEPENDENT = "pi_native_v2_independent"
     PI_NATIVE_V2_RAW_COMMON_ONLY = "pi_native_v2_raw_common_only"
     PI_NATIVE_V2_CORE = "pi_native_v2_core"
+    PI_NATIVE_V2_WO_COMMON = "pi_native_v2_wo_common"
+    PI_NATIVE_V2_WO_PRIVATE = "pi_native_v2_wo_private"
+    PI_NATIVE_V2_ALL_OFF = "pi_native_v2_all_off"
     PI_NATIVE_V2_RESIDUAL_ACTION = "pi_native_v2_residual_action"
 
     @property
@@ -43,20 +47,44 @@ class DualPi05Mode(str, Enum):
             self.PI_NATIVE_RAW_COMMON_ONLY: InteractionSpec(True, False, False, False),
             self.PI_NATIVE_CORE: InteractionSpec(True, True, False, False),
             self.PI_NATIVE_THREE_PATH: InteractionSpec(True, True, True, False),
+            self.PI_NATIVE_V2_INDEPENDENT: InteractionSpec(False, False, False, False),
             self.PI_NATIVE_V2_RAW_COMMON_ONLY: InteractionSpec(True, False, False, False),
             self.PI_NATIVE_V2_CORE: InteractionSpec(True, True, False, False),
+            self.PI_NATIVE_V2_WO_COMMON: InteractionSpec(False, True, False, False),
+            self.PI_NATIVE_V2_WO_PRIVATE: InteractionSpec(True, False, False, False),
+            self.PI_NATIVE_V2_ALL_OFF: InteractionSpec(False, False, False, False),
             self.PI_NATIVE_V2_RESIDUAL_ACTION: InteractionSpec(True, True, False, False),
         }[self]
 
     @property
     def remote_action_residual(self) -> bool:
-        return self is self.PI_NATIVE_V2_RESIDUAL_ACTION
+        return self in {
+            self.PI_NATIVE_V2_WO_COMMON,
+            self.PI_NATIVE_V2_WO_PRIVATE,
+            self.PI_NATIVE_V2_RESIDUAL_ACTION,
+        }
+
+    @property
+    def instantiates_residual_action(self) -> bool:
+        return self in {
+            self.PI_NATIVE_V2_RAW_COMMON_ONLY,
+            self.PI_NATIVE_V2_CORE,
+            self.PI_NATIVE_V2_WO_COMMON,
+            self.PI_NATIVE_V2_WO_PRIVATE,
+            self.PI_NATIVE_V2_ALL_OFF,
+            self.PI_NATIVE_V2_RESIDUAL_ACTION,
+        }
+
 
     @property
     def is_v2(self) -> bool:
         return self in {
+            self.PI_NATIVE_V2_INDEPENDENT,
             self.PI_NATIVE_V2_RAW_COMMON_ONLY,
             self.PI_NATIVE_V2_CORE,
+            self.PI_NATIVE_V2_WO_COMMON,
+            self.PI_NATIVE_V2_WO_PRIVATE,
+            self.PI_NATIVE_V2_ALL_OFF,
             self.PI_NATIVE_V2_RESIDUAL_ACTION,
         }
 
@@ -64,11 +92,15 @@ class DualPi05Mode(str, Enum):
     def is_native(self) -> bool:
         return self in {
             self.PI_NATIVE_INDEPENDENT,
+            self.PI_NATIVE_V2_INDEPENDENT,
             self.PI_NATIVE_RAW_COMMON_ONLY,
             self.PI_NATIVE_CORE,
             self.PI_NATIVE_THREE_PATH,
             self.PI_NATIVE_V2_RAW_COMMON_ONLY,
             self.PI_NATIVE_V2_CORE,
+            self.PI_NATIVE_V2_WO_COMMON,
+            self.PI_NATIVE_V2_WO_PRIVATE,
+            self.PI_NATIVE_V2_ALL_OFF,
             self.PI_NATIVE_V2_RESIDUAL_ACTION,
         }
 
@@ -107,7 +139,7 @@ class DualPi05(nnx.Module):
         width = left.action_in_proj.out_features
         if right.action_in_proj.out_features != width:
             raise ValueError("both action experts must use the same hidden width")
-        if mode is not None and mode.is_v2:
+        if mode is not None and mode.instantiates_residual_action:
             depth = left.PaliGemma.llm.module.configs[0].depth
             action_config = left.PaliGemma.llm.module.configs[1]
             residual_input_width = action_config.num_heads * action_config.head_dim

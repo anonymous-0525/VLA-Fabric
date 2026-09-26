@@ -20,12 +20,20 @@ python -m pip install --upgrade pip
 python -m pip install -e './eagle[dev]'
 ```
 
-Place or link external projects beneath `eagle/external/`:
+Install the upstream libraries independently and expose their import paths.
+`TWINVLA_ROOT` can point to any checkout location; the source packages do not
+require the original experiment-directory hierarchy. The example run YAMLs use
+`eagle/external/` as convenient placeholders, which can be changed:
 
 ```text
 eagle/external/TwinVLA-base/
 eagle/external/aloha_rlds/
 eagle/external/tabletop_sim/
+```
+
+```bash
+export TWINVLA_ROOT=/path/to/TwinVLA
+export PYTHONPATH="$TWINVLA_ROOT:${PYTHONPATH:-}"
 ```
 
 The release never edits these upstream trees.
@@ -63,9 +71,9 @@ These directories are ignored by Git.
 For multi-arm execution, install the external task environment in a separate
 compatible environment. StackCube requires RoboFactory and its IPC server
 configuration. Frame Insertion and Arch Assembly require the released
-`multiarm_sim` task package, robosuite, MuJoCo assets, and an EGL-capable Python
+`multiarm_sim` task package (`pip install -e ./simulation`), robosuite, MuJoCo assets, and an EGL-capable Python
 environment. Their paths are passed through the variables documented in
-[`multiarm-hpc.md`](multiarm-hpc.md); none is vendored here.
+[`multiarm-hpc.md`](multiarm-hpc.md); upstream simulators and robot assets are not vendored here.
 
 ## Verification without accelerators
 

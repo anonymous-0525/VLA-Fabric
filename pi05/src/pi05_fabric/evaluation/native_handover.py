@@ -15,11 +15,16 @@ class NativeEvaluationSpec:
     train_action_ffw: bool = False
     train_action_attention: bool = True
     train_paligemma_kv: bool = True
+    train_paligemma_qo: bool = False
+    separate_expanded_groups: bool = False
     action_horizon: int = 20
     execution_horizon: int = 20
 
 
 _SPECS = {
+    StageName.PI_NATIVE_V2_INDEPENDENT: NativeEvaluationSpec(
+        DualPi05Mode.PI_NATIVE_V2_INDEPENDENT, action_horizon=50, execution_horizon=25
+    ),
     StageName.PI_NATIVE_RAW_COMMON_STAGE1: NativeEvaluationSpec(
         DualPi05Mode.PI_NATIVE_RAW_COMMON_ONLY
     ),
@@ -31,6 +36,17 @@ _SPECS = {
     ),
     StageName.PI_NATIVE_V2_RESIDUAL_ACTION_STAGE2: NativeEvaluationSpec(
         DualPi05Mode.PI_NATIVE_V2_RESIDUAL_ACTION, action_horizon=50, execution_horizon=25
+    ),
+    StageName.PI_NATIVE_V2_FULL_DIRECT: NativeEvaluationSpec(
+        DualPi05Mode.PI_NATIVE_V2_RESIDUAL_ACTION, action_horizon=50, execution_horizon=25
+    ),
+    StageName.PI_NATIVE_V2_EXPANDED_CONTINUATION: NativeEvaluationSpec(
+        DualPi05Mode.PI_NATIVE_V2_RESIDUAL_ACTION,
+        train_action_ffw=True,
+        train_paligemma_qo=True,
+        separate_expanded_groups=True,
+        action_horizon=50,
+        execution_horizon=25,
     ),
 }
 
@@ -72,8 +88,11 @@ _NATIVE_INFERENCE_MODES = {
 
 _NATIVE_V2_INFERENCE_MODES = {
     "full": DualPi05Mode.PI_NATIVE_V2_RESIDUAL_ACTION,
+    "no_common": DualPi05Mode.PI_NATIVE_V2_WO_COMMON,
+    "no_private": DualPi05Mode.PI_NATIVE_V2_WO_PRIVATE,
     "core": DualPi05Mode.PI_NATIVE_V2_CORE,
     "common_only": DualPi05Mode.PI_NATIVE_V2_RAW_COMMON_ONLY,
+    "all_off": DualPi05Mode.PI_NATIVE_V2_ALL_OFF,
 }
 
 def native_inference_mode(value: str, *, v2: bool = False) -> DualPi05Mode:

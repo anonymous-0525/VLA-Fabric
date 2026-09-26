@@ -10,6 +10,7 @@ from pathlib import Path
 
 MAX_FILE_BYTES = 10 * 1024 * 1024
 TEXT_SUFFIXES = {
+    ".html", ".css", ".js", ".mjs", ".svg", ".csv",
     ".cfg",
     ".ini",
     ".json",
@@ -35,11 +36,6 @@ FORBIDDEN_DIRS = {
 FORBIDDEN_MODULES = {
     "eagle/src/commvla/communication/nspr.py",
     "eagle/src/commvla/models/multi_arm.py",
-    "pi05/src/pi05_fabric/data/robotwin2_dataset.py",
-    "pi05/src/pi05_fabric/evaluation/robotwin2_adapter.py",
-    "pi05/src/pi05_fabric/evaluation/robotwin2_ipc.py",
-    "pi05/src/pi05_fabric/evaluation/robotwin2_policy.py",
-    "pi05/src/pi05_fabric/evaluation/robotwin2_protocol.py",
 }
 PRIVATE_PATH_TOKENS = (
     "/data" + "/private",
@@ -68,7 +64,7 @@ def audit_tree(root: Path) -> list[str]:
     for path in sorted(root.rglob("*")):
         relative = _relative(path, root)
         parts = set(path.relative_to(root).parts)
-        if ".git" in parts:
+        if parts & {".git", "node_modules", "site-checks"}:
             continue
         bad_dirs = parts & FORBIDDEN_DIRS
         if bad_dirs:

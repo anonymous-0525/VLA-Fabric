@@ -14,14 +14,17 @@ tasks.
 |---|---|---|
 | [`eagle/`](eagle/) | Eagle2/OpenVLA-style SingleVLA | Controlled architecture and training study over 32 task-model combinations |
 | [`pi05/`](pi05/) | pi0.5/OpenPI | Architecture-aware transfer and single-node 2/3/4-agent workflows |
+| [`simulation/`](simulation/) | MuJoCo/robosuite | Three-arm frame, four-arm frame, and arch task environments |
+| [`physical/`](physical/) | Hardware-independent | Timestamped recordings, validation, and role-dataset export |
 
 Both implementations preserve one-arm-one-agent ownership: each policy receives
 its local observation and produces its local action. Peer information crosses
 only the interaction boundaries defined by the experiment configuration.
 
-The release includes the three-agent StackCube workflow and four-agent Frame
-Insertion and Arch Assembly adapters. It excludes checkpoints, datasets,
-rollouts, internal cluster queues, and the communication-efficiency/NSPR
+The release includes StackCube, three-/four-arm frame tasks, Arch Assembly,
+RoboTwin bimanual task adapters, independently trained controls, and inference
+path removals. It excludes checkpoints, raw datasets, complete rollout archives,
+internal cluster queues, and the communication-efficiency/NSPR
 implementation studied separately.
 
 ## Quick start
@@ -45,13 +48,30 @@ python scripts/audit_release.py
 Backbone-specific tests are documented in [`eagle/README.md`](eagle/README.md)
 and [`pi05/README.md`](pi05/README.md).
 
+## Interactive project page
+
+The GitHub Pages source is in `docs/`; the Three.js scene and synchronized
+camera player are in `site-src/`. Local builds do not require the ML environments:
+
+```bash
+npm ci
+npm run build
+npm run preview
+# http://localhost:4173
+```
+
+The page includes the animated four-arm illustration, four real-robot recordings
+with synchronized privacy-filtered wrist views, and global-view simulation clips.
+See [`docs/media.md`](docs/media.md) for source distinctions, processing, and QA.
+
 ## Repository status
 
-This is a research release accompanying a work in progress. The project page
+This is a core-code research release. The project page
 shows selected, completed evaluations; it is not a model zoo. Model weights,
 datasets, and complete rollout archives are not bundled. Paths in the
 checked-in YAML files are portable placeholders rather than references to
-the authors' machines.
+the authors' machines. Hardware drivers and device registration are intentionally
+separate from the portable data and policy interfaces.
 
 ## License
 

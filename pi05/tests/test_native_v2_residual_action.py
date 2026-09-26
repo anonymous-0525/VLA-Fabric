@@ -87,6 +87,26 @@ def test_v2_mode_uses_residual_action_without_changing_v1_interaction_tuple():
     assert config.action_horizon == 2
 
 
+def test_v2_independent_has_no_communication_modules():
+    config, left, right, _ = _toy()
+    pair = DualPi05(
+        left,
+        right,
+        mode=DualPi05Mode.PI_NATIVE_V2_INDEPENDENT,
+        rngs=nnx.Rngs(30),
+    )
+
+    mode = DualPi05Mode.PI_NATIVE_V2_INDEPENDENT
+    assert mode.is_v2
+    assert tuple(mode.interaction_spec) == (False, False, False, False)
+    assert not mode.remote_action_residual
+    assert not hasattr(pair, "fabric_residual_action_left")
+    assert not hasattr(pair, "fabric_residual_action_right")
+    assert not hasattr(pair, "fabric_linear_action_left")
+    assert not hasattr(pair, "fabric_linear_action_right")
+    assert config.action_horizon == 2
+
+
 def test_receiver_local_residual_parameters_are_independent_and_zero_gated():
     left = _residual_action_branch()(depth=4, width=64, rngs=nnx.Rngs(1))
     right = _residual_action_branch()(depth=4, width=64, rngs=nnx.Rngs(2))

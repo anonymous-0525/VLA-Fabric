@@ -86,7 +86,8 @@ def finalize_team_checkpoint(
     complete_tmp.replace(root / "COMPLETE")
 
 
-def audit_team_checkpoint(root: Path, *, expected_agent_count: int) -> dict:
+def audit_team_checkpoint_metadata(root: Path, *, expected_agent_count: int) -> dict:
+    """Verify team and role metadata without deserializing multi-GiB state."""
     root = Path(root)
     complete_path = root / "COMPLETE"
     manifest_path = root / "team_manifest.json"
@@ -99,25 +100,63 @@ def audit_team_checkpoint(root: Path, *, expected_agent_count: int) -> dict:
     manifest = json.loads(manifest_bytes)
     if manifest["agent_count"] != expected_agent_count:
         raise ValueError("team checkpoint agent count mismatch")
+    expected_roles = list(range(expected_agent_count))
+    if manifest.get("roles") != expected_roles:
+        raise ValueError("team checkpoint roles are inconsistent")
+    if len(manifest.get("role_model_sha256", ())) != expected_agent_count:
+        raise ValueError("team checkpoint model hashes are incomplete")
+    if len(manifest.get("role_state_sha256", ())) != expected_agent_count:
+        raise ValueError("team checkpoint state hashes are incomplete")
+
     for role in manifest["roles"]:
-        snapshot = restore_training_state(_role_path(root, role))
-        if snapshot.step != manifest["step"] or snapshot.stage.value != manifest["stage"]:
+        role_path = _role_path(root, role)
+        role_manifest_path = role_path / "manifest.json"
+        state_path = role_path / "state.msgpack"
+        if not role_manifest_path.is_file() or not state_path.is_file():
+            raise ValueError(f"role-{role} checkpoint files are incomplete")
+        role_manifest = json.loads(role_manifest_path.read_text(encoding="utf-8"))
+        protocol = role_manifest.get("protocol") or {}
+        if role_manifest["step"] != manifest["step"] or role_manifest["stage"] != manifest["stage"]:
             raise ValueError(f"role-{role} does not match the team manifest")
+        if protocol.get("agent_count") != expected_agent_count or protocol.get("role") != role:
+            raise ValueError(f"role-{role} protocol metadata is inconsistent")
+        if role_manifest["model_sha256"] != manifest["role_model_sha256"][role]:
+            raise ValueError(f"role-{role} model hash metadata is inconsistent")
+        if role_manifest["state_sha256"] != manifest["role_state_sha256"][role]:
+            raise ValueError(f"role-{role} state hash metadata is inconsistent")
     return {**manifest, "complete": True}
 
 
+def audit_team_checkpoint(root: Path, *, expected_agent_count: int) -> dict:
+    manifest = audit_team_checkpoint_metadata(
+        root,
+        expected_agent_count=expected_agent_count,
+    )
+    for role in manifest["roles"]:
+        snapshot = restore_training_state(_role_path(Path(root), role))
+        if snapshot.step != manifest["step"] or snapshot.stage.value != manifest["stage"]:
+            raise ValueError(f"role-{role} does not match the team manifest")
+    return manifest
+
+
 def load_role_weights(root: Path, *, role: int, expected_agent_count: int):
-    audit_team_checkpoint(root, expected_agent_count=expected_agent_count)
+    audit_team_checkpoint_metadata(root, expected_agent_count=expected_agent_count)
     if not 0 <= role < expected_agent_count:
         raise ValueError("role is outside the checkpoint team")
     return restore_training_state(_role_path(Path(root), role)).params
 
 
 def restore_role_snapshot(root: Path, *, role: int, expected_agent_count: int):
-    audit_team_checkpoint(root, expected_agent_count=expected_agent_count)
+    audit_team_checkpoint_metadata(root, expected_agent_count=expected_agent_count)
     if not 0 <= role < expected_agent_count:
         raise ValueError("role is outside the checkpoint team")
-    return restore_training_state(_role_path(Path(root), role))
+    # The serialized-state hash already protects the complete runtime payload.
+    # Recomputing the model hash forces another multi-GiB device-to-host pass;
+    # the explicit offline team audit retains that deeper provenance check.
+    return restore_training_state(
+        _role_path(Path(root), role),
+        verify_model=False,
+    )
 
 
 def snapshot_role_engine(

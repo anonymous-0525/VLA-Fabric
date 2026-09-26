@@ -84,6 +84,8 @@ def load_dual_pi05(
     train_action_ffw: bool = True,
     train_action_attention: bool = True,
     train_paligemma_kv: bool = True,
+    train_paligemma_qo: bool = False,
+    separate_expanded_groups: bool = False,
     action_horizon: int = 20,
 ) -> tuple[pi0_config.Pi0Config, DualPi05]:
     left_key, right_key, fabric_key = jax.random.split(jax.random.key(seed), 3)
@@ -92,6 +94,8 @@ def load_dual_pi05(
             train_action_ffw=train_action_ffw,
             train_action_attention=train_action_attention,
             train_paligemma_kv=train_paligemma_kv,
+            train_paligemma_qo=train_paligemma_qo,
+            separate_expanded_groups=separate_expanded_groups,
         )
         if mode is not None and mode.is_native
         else None

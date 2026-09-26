@@ -36,6 +36,7 @@ class StepInfo(NamedTuple):
     local_left_loss: jax.Array
     local_right_loss: jax.Array
     local_grad_norm: jax.Array
+    microbatch_losses: jax.Array
 
 
 def parameter_values(state) -> dict[str, jax.Array]:
@@ -155,12 +156,15 @@ class TrainingEngine:
         )(model)
         return loss, left_loss, right_loss, grads
 
-    def _finish_step(self, state, grads, loss, left_loss, right_loss, local_finite, *, axis_name):
+    def _finish_step(self, state, grads, loss, left_loss, right_loss, local_finite, *, axis_name, microbatch_losses=None):
+        if microbatch_losses is None:
+            microbatch_losses = jnp.asarray([[loss,left_loss,right_loss]])
         local_grad_norm = optax.global_norm(grads)
         local_loss = loss
         local_left_loss = left_loss
         local_right_loss = right_loss
         if axis_name is not None:
+            microbatch_losses = jax.lax.pmean(microbatch_losses, axis_name)
             grads = jax.lax.pmean(grads, axis_name)
             loss = jax.lax.pmean(loss, axis_name)
             left_loss = jax.lax.pmean(left_loss, axis_name)
@@ -189,6 +193,7 @@ class TrainingEngine:
             local_left_loss,
             local_right_loss,
             local_grad_norm,
+            microbatch_losses,
         )
 
     def _step_impl(
@@ -325,7 +330,7 @@ class TrainingEngine:
                 current_left_sum + left_loss,
                 current_right_sum + right_loss,
                 current_finite,
-            ), None
+            ), jnp.asarray([loss,left_loss,right_loss])
 
         tail_inputs = (
             keys[1:],
@@ -335,7 +340,7 @@ class TrainingEngine:
             right_actions[1:],
             ownership_layout[1:],
         )
-        (grad_sum, loss_sum, left_sum, right_sum, finite), _ = jax.lax.scan(
+        (grad_sum, loss_sum, left_sum, right_sum, finite), tail_losses = jax.lax.scan(
             accumulate,
             (grad_sum, first_loss, first_left_loss, first_right_loss, finite),
             tail_inputs,
@@ -353,6 +358,7 @@ class TrainingEngine:
             right_loss,
             finite,
             axis_name=axis_name,
+            microbatch_losses=jnp.concatenate((jnp.asarray([[first_loss,first_left_loss,first_right_loss]]),tail_losses)),
         )
 
     def step(
@@ -478,6 +484,8 @@ def create_native_engine(
     train_action_ffw: bool = True,
     train_action_attention: bool = True,
     train_paligemma_kv: bool = True,
+    train_paligemma_qo: bool = False,
+    separate_expanded_groups: bool = False,
 ) -> TrainingEngine:
     """Create a native-mode engine with disjoint strong parameter groups."""
     if not mode.is_native:
@@ -486,6 +494,8 @@ def create_native_engine(
         train_action_ffw=train_action_ffw,
         train_action_attention=train_action_attention,
         train_paligemma_kv=train_paligemma_kv,
+        train_paligemma_qo=train_paligemma_qo,
+        separate_expanded_groups=separate_expanded_groups,
     )
     selected = nnx.state(model).filter(trainable_filter)
     labels = native_optimizer_labels(
@@ -493,6 +503,8 @@ def create_native_engine(
         train_action_ffw=train_action_ffw,
         train_action_attention=train_action_attention,
         train_paligemma_kv=train_paligemma_kv,
+        train_paligemma_qo=train_paligemma_qo,
+        separate_expanded_groups=separate_expanded_groups,
     )
     from pi05_fabric.training.optimizer import create_grouped_optimizer
 

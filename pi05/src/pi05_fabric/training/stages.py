@@ -18,14 +18,25 @@ class StageName(str, Enum):
     I3_RAW_CORE_STAGE2 = "i3_raw_core_stage2"
     I4_RAW_FULL_STAGE2 = "i4_raw_full_stage2"
     PI_NATIVE_STRONG_INDEPENDENT = "pi_native_strong_independent"
+    PI_NATIVE_V2_INDEPENDENT = "pi_native_v2_independent"
     PI_NATIVE_RAW_COMMON_STAGE1 = "pi_native_raw_common_stage1"
     PI_NATIVE_THREE_PATH_STAGE2 = "pi_native_three_path_stage2"
     PI_NATIVE_V2_RAW_COMMON_STAGE1 = "pi_native_v2_raw_common_stage1"
     PI_NATIVE_V2_RESIDUAL_ACTION_STAGE2 = "pi_native_v2_residual_action_stage2"
+    PI_NATIVE_V2_FULL_DIRECT = "pi_native_v2_full_direct"
+    PI_NATIVE_V2_EXPANDED_CONTINUATION = "pi_native_v2_expanded_continuation"
     PI05_STACKCUBE_3A_COMMON_STAGE1 = "pi05_stackcube_3a_common_stage1"
     PI05_STACKCUBE_3A_FULL_STAGE2 = "pi05_stackcube_3a_full_stage2"
     PI05_FOUR_ARM_COMMON_STAGE1 = "pi05_four_arm_common_stage1"
     PI05_FOUR_ARM_FULL_STAGE2 = "pi05_four_arm_full_stage2"
+    PI05_FOUR_ARM_FULL_DIRECT = "pi05_four_arm_full_direct"
+    PI05_FRAME4_INDEPENDENT_DIRECT = "pi05_frame4_independent_direct"
+    PI05_FRAME4_INDEPENDENT_STAGE1 = "pi05_frame4_independent_stage1"
+    PI05_FRAME4_INDEPENDENT_STAGE2 = "pi05_frame4_independent_stage2"
+    PI05_FRAME3_COMMON_STAGE1 = "pi05_frame3_common_stage1"
+    PI05_FRAME3_FULL_STAGE2 = "pi05_frame3_full_stage2"
+    PI05_FRAME3_FULL_DIRECT = "pi05_frame3_full_direct"
+    PI05_FRAME3_INDEPENDENT_DIRECT = "pi05_frame3_independent_direct"
 
 
 @dataclass(frozen=True)
@@ -83,7 +94,22 @@ def fork_stage2(
         stage1.stage is StageName.PI05_FOUR_ARM_COMMON_STAGE1
         and target is StageName.PI05_FOUR_ARM_FULL_STAGE2
     )
-    native_stage_fork = native_fork or native_v2_fork or stack_cube_3a_fork or four_arm_fork
+    frame4_independent_fork = (
+        stage1.stage is StageName.PI05_FRAME4_INDEPENDENT_STAGE1
+        and target is StageName.PI05_FRAME4_INDEPENDENT_STAGE2
+    )
+    frame3_full_fork = (
+        stage1.stage is StageName.PI05_FRAME3_COMMON_STAGE1
+        and target is StageName.PI05_FRAME3_FULL_STAGE2
+    )
+    native_stage_fork = (
+        native_fork
+        or native_v2_fork
+        or stack_cube_3a_fork
+        or four_arm_fork
+        or frame4_independent_fork
+        or frame3_full_fork
+    )
     if not (legacy_fork or native_stage_fork):
         raise ValueError("Stage 2 target is incompatible with its Stage 1 source")
     resolved_model_seed = stage1.model_seed if model_seed is None else model_seed

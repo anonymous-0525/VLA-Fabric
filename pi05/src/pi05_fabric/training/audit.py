@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from pi05_fabric.training.checkpoint import restore_training_state
+from pi05_fabric.training.stages import StageName
 
 
 def audit_training_checkpoint(
@@ -35,6 +36,40 @@ def audit_training_checkpoint(
         raise ValueError("checkpoint step mismatch")
     if int(manifest.get("schedule_step", -1)) != expected_step:
         raise ValueError("checkpoint schedule step mismatch")
+    if expected_stage == StageName.PI_NATIVE_V2_FULL_DIRECT.value:
+        protocol = manifest.get("protocol")
+        initialization = protocol.get("initialization") if isinstance(protocol, dict) else None
+        if (manifest.get("parent_model_sha256", "missing") is not None
+                or not isinstance(initialization, dict)
+                or initialization.get("kind") != "base_direct"
+                or initialization.get("parent_model_sha256", "missing") is not None):
+            raise ValueError("Full-direct checkpoint requires base_direct initialization without a parent hash")
+        base_checkpoint = initialization.get("base_checkpoint")
+        if not isinstance(base_checkpoint, str) or not Path(base_checkpoint).is_absolute():
+            raise ValueError("Full-direct checkpoint requires an absolute base checkpoint path")
+        if "continuation" in protocol:
+            raise ValueError("Full-direct checkpoint cannot contain a continuation contract")
+    if expected_stage == StageName.PI_NATIVE_V2_EXPANDED_CONTINUATION.value:
+        protocol = manifest.get("protocol")
+        initialization = protocol.get("initialization") if isinstance(protocol, dict) else None
+        continuation = protocol.get("continuation") if isinstance(protocol, dict) else None
+        parent_hash = manifest.get("parent_model_sha256")
+        if (
+            not isinstance(initialization, dict)
+            or initialization.get("kind") != "expanded_continuation"
+            or not isinstance(continuation, dict)
+            or continuation.get("kind") != "scan_expanded_low_rewarm"
+            or not isinstance(parent_hash, str)
+            or initialization.get("parent_model_sha256") != parent_hash
+            or continuation.get("parent_model_sha256") != parent_hash
+            or initialization.get("parent_step") != 20_000
+            or continuation.get("parent_step") != 20_000
+            or continuation.get("sample_step_offset") != 20_000
+        ):
+            raise ValueError("expanded continuation checkpoint lineage mismatch")
+        base_checkpoint = initialization.get("base_checkpoint")
+        if not isinstance(base_checkpoint, str) or not Path(base_checkpoint).is_absolute():
+            raise ValueError("expanded continuation requires an absolute base checkpoint path")
 
     state_sha256 = hashlib.sha256(state_path.read_bytes()).hexdigest()
     if state_sha256 != manifest.get("state_sha256"):

@@ -33,10 +33,10 @@ def test_project_site_has_complete_static_navigation():
     parser = PageParser()
     parser.feed(page)
 
-    assert {"overview", "interaction", "evidence", "code"} <= parser.ids
+    assert {"top", "physical", "simulation", "method", "code"} <= parser.ids
     assert "VLA-Fabric" in page
-    assert "80.5%" in page and "94.5%" in page
-    assert not parser.scripts
+    assert "80.5" in page and "94.5" in page
+    assert any(script.get("src") == "static/app.js" for script in parser.scripts)
     assert "TBD" not in page
 
 
@@ -47,7 +47,8 @@ def test_project_site_local_assets_and_anchors_resolve():
 
     for image in parser.images:
         assert image.get("alt", "").strip()
-        assert (SITE / image["src"]).is_file(), image["src"]
+        if "src" in image:
+            assert (SITE / image["src"]).is_file(), image["src"]
 
     for href in parser.local_links:
         if href.startswith(("https://", "http://", "mailto:")):

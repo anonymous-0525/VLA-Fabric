@@ -1,0 +1,146 @@
+[
+  {
+    "task": "frame4",
+    "camera": "global",
+    "file": "frame4-global.mp4",
+    "privacy_filter": "none",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "frame4",
+    "camera": "wrist1",
+    "file": "frame4-wrist1.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "frame4",
+    "camera": "wrist2",
+    "file": "frame4-wrist2.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "frame4",
+    "camera": "wrist3",
+    "file": "frame4-wrist3.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "frame4",
+    "camera": "wrist4",
+    "file": "frame4-wrist4.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "basket3",
+    "camera": "global",
+    "file": "basket3-global.mp4",
+    "privacy_filter": "none",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "basket3",
+    "camera": "wrist1",
+    "file": "basket3-wrist1.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "basket3",
+    "camera": "wrist2",
+    "file": "basket3-wrist2.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "basket3",
+    "camera": "wrist3",
+    "file": "basket3-wrist3.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "relay3",
+    "camera": "global",
+    "file": "relay3-global.mp4",
+    "privacy_filter": "none",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "relay3",
+    "camera": "wrist1",
+    "file": "relay3-wrist1.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "relay3",
+    "camera": "wrist2",
+    "file": "relay3-wrist2.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "relay3",
+    "camera": "wrist3",
+    "file": "relay3-wrist3.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "relay4",
+    "camera": "global",
+    "file": "relay4-global.mp4",
+    "privacy_filter": "none",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "relay4",
+    "camera": "wrist1",
+    "file": "relay4-wrist1.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "relay4",
+    "camera": "wrist2",
+    "file": "relay4-wrist2.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "relay4",
+    "camera": "wrist3",
+    "file": "relay4-wrist3.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  },
+  {
+    "task": "relay4",
+    "camera": "wrist4",
+    "file": "relay4-wrist4.mp4",
+    "privacy_filter": "peripheral Gaussian 22px; center 2px",
+    "audio": false,
+    "timing": "unaltered source timestamps"
+  }
+]

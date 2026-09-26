@@ -9,13 +9,17 @@ def test_release_has_two_scoped_packages() -> None:
     assert (ROOT / "pi05" / "src" / "pi05_fabric").is_dir()
 
 
-def test_unfinished_and_infocom_modules_are_absent() -> None:
+def test_infocom_modules_are_absent() -> None:
     forbidden = (
         ROOT / "eagle" / "src" / "commvla" / "models" / "multi_arm.py",
         ROOT / "eagle" / "src" / "commvla" / "communication" / "nspr.py",
-        ROOT / "pi05" / "src" / "pi05_fabric" / "data" / "robotwin2_dataset.py",
     )
     assert all(not path.exists() for path in forbidden)
+
+
+def test_robotwin_and_frame_adapters_are_released() -> None:
+    assert (ROOT / "pi05/src/pi05_fabric/data/robotwin2_dataset.py").is_file()
+    assert (ROOT / "pi05/src/pi05_fabric/data/multiarm_frame_tasks.py").is_file()
 
 
 def test_public_documentation_is_present() -> None:

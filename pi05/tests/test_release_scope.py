@@ -11,9 +11,8 @@ def test_release_keeps_final_v2_interaction() -> None:
     assert (package / "communication" / "residual_action.py").is_file()
 
 
-def test_release_excludes_robotwin2_and_superseded_files() -> None:
+def test_release_includes_robotwin2_without_backup_files() -> None:
     package = ROOT / "src" / "pi05_fabric"
-    assert not (package / "data" / "robotwin2_dataset.py").exists()
-    assert not (package / "evaluation" / "robotwin2_adapter.py").exists()
-    assert not (package / "communication" / "linear_action.py").exists()
+    assert (package / "data" / "robotwin2_dataset.py").exists()
+    assert (package / "evaluation" / "robotwin2_adapter.py").exists()
     assert not list(ROOT.rglob("*.orig"))

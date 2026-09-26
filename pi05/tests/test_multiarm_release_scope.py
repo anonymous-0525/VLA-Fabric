@@ -22,6 +22,3 @@ def test_multiarm_release_modules_exist() -> None:
 
 def test_private_workspace_artifacts_remain_absent() -> None:
     assert not list(ROOT.rglob("*.orig"))
-    assert not (PACKAGE / "data" / "robotwin2_dataset.py").exists()
-    assert not (PACKAGE / "evaluation" / "robotwin2_policy.py").exists()
-

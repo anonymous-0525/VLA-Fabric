@@ -24,6 +24,23 @@ def _snapshot(stage, *, training_seed=11):
 
 
 def test_v2_stages_map_to_v2_modes(tmp_path: Path):
+    independent = LaunchConfig(
+        stage=StageName.PI_NATIVE_V2_INDEPENDENT,
+        dataset=tmp_path,
+        base_checkpoint=tmp_path,
+        output=tmp_path / "independent",
+        steps=50,
+        batch_size=1,
+        learning_rate=5e-5,
+        warmup_steps=2,
+        model_seed=7,
+        training_seed=10,
+    )
+    assert independent.mode is DualPi05Mode.PI_NATIVE_V2_INDEPENDENT
+    assert independent.mode.is_v2
+    assert independent.mode.interaction_spec == (False, False, False, False)
+    independent.validate_paths(require_existing=False)
+
     stage1 = LaunchConfig(
         stage=StageName.PI_NATIVE_V2_RAW_COMMON_STAGE1,
         dataset=tmp_path,

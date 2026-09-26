@@ -9,10 +9,13 @@ actions local while re-instantiating the three functions as:
 - peer Private Prefix K/V consumed by the local action query;
 - gated residual peer-action attention recomputed in each layer and flow step.
 
-The released model path is `pi_native_v2_residual_action`. Legacy pi0.5
-prototypes, RoboTwin2 adapters, and internal scheduling scripts are intentionally
-excluded. The shared N-agent core and focused three- and four-arm task
-workflows are included under `scripts/multiarm`.
+The primary model path is `pi_native_v2_residual_action`. The release also
+includes independent fine-tuning, Full single-stage fine-tuning, task-local
+continuation contracts, RoboTwin adapters, and inference path-removal profiles.
+The shared N-agent core and focused three- and four-arm task workflows are
+included under `scripts/multiarm`; `scripts/*_multiarm_frame.py` covers the
+additional three-arm frame and independently trained frame controls.
+Internal cluster scheduling scripts are excluded.
 
 ## External dependencies
 
@@ -32,10 +35,12 @@ Dataset conversion expects the ALOHA RLDS data described in
 
 ## Training
 
-The paper protocol uses four processes, one GPU per process, with global batch
+The original bimanual protocol uses four processes, one GPU per process, with global batch
 12. Stage 1 trains Raw Common for 10k optimizer updates. Stage 2 loads only the
 Stage-1 model weights, initializes a fresh optimizer/schedule/RNG, enables all
-three interactions, and trains for 40k updates.
+three interactions, and trains for 40k updates. This is one reported recipe,
+not a requirement of the interaction architecture. Full single-stage and
+independent modes are selectable in `scripts/train_dual_pi05.py`.
 
 ```bash
 cd pi05
@@ -77,6 +82,14 @@ finite optimization, and process-specific memory without launching a formal
 run.
 
 ## Tests
+
+RoboTwin conversion and evaluation use the standalone CLIs
+`convert_robotwin2_rlds.py`, `prepare_robotwin2_conditions.py`,
+`serve_robotwin2_pi05.py`, and `evaluate_robotwin2_pi05.py` in `scripts/`.
+Use `--help` for explicit dataset, checkpoint, and environment locations.
+Inference removals (`no_common`, `no_private`, `core`, `all_off`) reuse the Full
+checkpoint; they are not independently trained baselines. Local IPC is intended
+only for mutually trusted processes, not an internet-facing inference service.
 
 ```bash
 XLA_FLAGS=--xla_force_host_platform_device_count=4 \

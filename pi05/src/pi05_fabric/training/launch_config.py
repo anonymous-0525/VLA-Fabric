@@ -16,10 +16,13 @@ _MODES = {
     StageName.I3_RAW_CORE_STAGE2: DualPi05Mode.I3_RAW_CORE,
     StageName.I4_RAW_FULL_STAGE2: DualPi05Mode.I4_RAW_FULL,
     StageName.PI_NATIVE_STRONG_INDEPENDENT: DualPi05Mode.PI_NATIVE_INDEPENDENT,
+    StageName.PI_NATIVE_V2_INDEPENDENT: DualPi05Mode.PI_NATIVE_V2_INDEPENDENT,
     StageName.PI_NATIVE_RAW_COMMON_STAGE1: DualPi05Mode.PI_NATIVE_RAW_COMMON_ONLY,
     StageName.PI_NATIVE_THREE_PATH_STAGE2: DualPi05Mode.PI_NATIVE_THREE_PATH,
     StageName.PI_NATIVE_V2_RAW_COMMON_STAGE1: DualPi05Mode.PI_NATIVE_V2_RAW_COMMON_ONLY,
     StageName.PI_NATIVE_V2_RESIDUAL_ACTION_STAGE2: DualPi05Mode.PI_NATIVE_V2_RESIDUAL_ACTION,
+    StageName.PI_NATIVE_V2_FULL_DIRECT: DualPi05Mode.PI_NATIVE_V2_RESIDUAL_ACTION,
+    StageName.PI_NATIVE_V2_EXPANDED_CONTINUATION: DualPi05Mode.PI_NATIVE_V2_RESIDUAL_ACTION,
 }
 
 
@@ -43,6 +46,7 @@ class LaunchConfig:
     checkpoint_every: int = 0
     stage1_checkpoint: Path | None = None
     resume_checkpoint: Path | None = None
+    weights_checkpoint: Path | None = None
 
     @property
     def mode(self) -> DualPi05Mode:
@@ -81,8 +85,6 @@ class LaunchConfig:
             raise ValueError("steps, batch_size, and learning_rate must be positive")
         if self.device_count <= 0 or self.gradient_accumulation <= 0:
             raise ValueError("device_count and gradient_accumulation must be positive")
-        if self.gradient_accumulation not in (1, 3):
-            raise ValueError("gradient_accumulation must be 1 or the formal B12 value 3")
         final_lr = self.learning_rate if self.final_learning_rate is None else self.final_learning_rate
         if final_lr <= 0 or final_lr > self.learning_rate:
             raise ValueError("final_learning_rate must be positive and no larger than learning_rate")
@@ -90,13 +92,23 @@ class LaunchConfig:
             raise ValueError("warmup_steps must be in [0, steps)")
         if self.checkpoint_every < 0:
             raise ValueError("checkpoint_every cannot be negative")
+        if self.stage is StageName.PI_NATIVE_V2_FULL_DIRECT:
+            if self.stage1_checkpoint is not None or self.weights_checkpoint is not None:
+                raise ValueError("Full-direct requires base initialization or same-stage resume, not stage1/weights")
+            if self.parent_training_seed is not None:
+                raise ValueError("Full-direct has no parent training seed")
+        if self.stage is StageName.PI_NATIVE_V2_EXPANDED_CONTINUATION:
+            if self.weights_checkpoint is None and self.resume_checkpoint is None:
+                raise ValueError("expanded continuation requires a weight parent or same-stage resume")
+            if self.stage1_checkpoint is not None:
+                raise ValueError("expanded continuation requires a weight parent, not a Stage 1 fork")
         if self.stage in (
             StageName.I3_RAW_CORE_STAGE2,
             StageName.I4_RAW_FULL_STAGE2,
             StageName.PI_NATIVE_THREE_PATH_STAGE2,
             StageName.PI_NATIVE_V2_RESIDUAL_ACTION_STAGE2,
         ):
-            if self.stage1_checkpoint is None and self.resume_checkpoint is None:
+            if self.stage1_checkpoint is None and self.resume_checkpoint is None and self.weights_checkpoint is None:
                 raise ValueError("stage1_checkpoint is required for a new Stage 2 run")
         if (
             self.stage in (
@@ -107,13 +119,13 @@ class LaunchConfig:
             and self.resolved_training_seed == self.parent_training_seed
         ):
             raise ValueError("Stage 2 training seed must differ from the Stage 1 training seed")
-        if self.stage1_checkpoint is not None and self.resume_checkpoint is not None:
+        if sum(p is not None for p in (self.stage1_checkpoint, self.resume_checkpoint, self.weights_checkpoint)) > 1:
             raise ValueError("Stage 2 fork and same-stage resume are mutually exclusive")
         if require_existing:
             for name, path in (("dataset", self.dataset), ("base_checkpoint", self.base_checkpoint)):
                 if not path.exists():
                     raise FileNotFoundError(f"{name} does not exist: {path}")
-            for name, path in (("stage1_checkpoint", self.stage1_checkpoint), ("resume_checkpoint", self.resume_checkpoint)):
+            for name, path in (("stage1_checkpoint", self.stage1_checkpoint), ("resume_checkpoint", self.resume_checkpoint), ("weights_checkpoint", self.weights_checkpoint)):
                 if path is not None and not path.exists():
                     raise FileNotFoundError(f"{name} does not exist: {path}")
         if self.output.exists() and self.resume_checkpoint is None:
