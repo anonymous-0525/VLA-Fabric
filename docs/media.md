@@ -55,9 +55,13 @@ highlights the selected arm and both directions of its communication relations.
 Reduced-motion preferences pause the scene and disable background-video motion.
 The renderer loads separately from the document and navigation, runs at a
 capped 30 fps, uses direct lighting, and pauses when offscreen. Background
-video starts only after scene initialization. Physical camera streams load
-on explicit playback: only the global and selected wrist view decode, while
-the neighboring carousel views use posters. Only one task plays at a time.
+video starts only after scene initialization. A physical global video's
+metadata is prepared near the viewport; playback loads the global stream
+before the selected wrist stream. Neighboring carousel views use posters.
+Only one task plays at a time. Loading status follows actual playback, not
+just a play request. Native global controls and a direct video link remain
+available, with format fallback on media errors. Wrist buffering or failure
+never blocks the global view.
 
 ## Paper evidence
 
@@ -84,6 +88,7 @@ npm run preview
 # In another terminal:
 npx playwright install chromium
 npm run test:site
+node scripts/site/check-playback.mjs
 ```
 
 Browser checks cover desktop/mobile framing, live canvas motion, task/camera

@@ -7,7 +7,13 @@ function setIcon(button, name) {
   refreshIcons();
 }
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const extension = document.createElement('video').canPlayType('video/mp4; codecs="avc1.42E01E"') ? 'mp4' : 'webm';
+const codecProbe = document.createElement('video');
+const formats = [
+  ['mp4', 'video/mp4; codecs="avc1.64001e"'],
+  ['webm', 'video/webm; codecs="vp9"'],
+].filter(([, type]) => codecProbe.canPlayType(type)).map(([format]) => format);
+if (!formats.length) formats.push('mp4', 'webm');
+const extension = formats[0];
 const media = (id, view, ext = extension) => 'static/media/' + id + '-' + view + '.' + ext;
 const seconds = time => Math.floor((time || 0)/60) + ':' + String(Math.floor((time || 0)%60)).padStart(2,'0');
 const play = video => video.play().catch(() => {});
@@ -32,6 +38,8 @@ class CameraPlayer {
     this.task = task;
     this.index = 0;
     this.loaded = false;
+    this.wantPlay = false;
+    this.attempt = 0;
     this.root = document.createElement('article');
     this.root.className = 'physical-item';
     this.root.dataset.task = task.id;
@@ -40,15 +48,18 @@ class CameraPlayer {
       '<div class="view-headings"><span>Global</span><div><span>Wrist <b class="wrist-counter">01 / 0' + task.arms + '</b></span><div class="carousel-tools">',
       '<button class="wrist-prev icon-button" title="Previous wrist camera" aria-label="Previous wrist camera"><i data-lucide="chevron-left"></i></button>',
       '<button class="wrist-next icon-button" title="Next wrist camera" aria-label="Next wrist camera"><i data-lucide="chevron-right"></i></button></div></div></div>',
-      '<div class="camera-pair"><div class="global-view"><video class="global-video" playsinline muted preload="none" aria-label="' + task.short + ' global camera"></video><button class="video-start" aria-label="Play ' + task.short + ' synchronized cameras"><i data-lucide="play"></i></button></div>',
-      '<div class="wrist-window" tabindex="0" aria-label="' + task.short + ' wrist camera carousel"><div class="wrist-track"></div></div></div>',
+      '<div class="camera-pair"><div class="global-view"><video class="global-video" controls playsinline muted preload="none" aria-label="' + task.short + ' global camera"></video><button class="video-start" aria-label="Play ' + task.short + ' synchronized cameras"><i data-lucide="play"></i></button><span class="video-loading" role="status" hidden>Loading video…</span></div>',
+      '<div class="wrist-window" tabindex="0" aria-label="' + task.short + ' wrist camera carousel"><div class="wrist-track"></div><span class="wrist-loading" role="status" hidden>Loading wrist…</span></div></div>',
       '<div class="playback-bar"><button class="video-play icon-button" title="Play synchronized cameras" aria-label="Play synchronized cameras"><i data-lucide="play"></i></button><span class="video-time">0:00 / ' + seconds(task.duration) + '</span>',
       '<input class="video-seek" type="range" min="0" max="1000" value="0" aria-label="' + task.short + ' video position"><select class="video-speed" aria-label="' + task.short + ' playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>',
-      '<button class="video-fullscreen icon-button" title="Fullscreen global view" aria-label="Fullscreen global view"><i data-lucide="maximize"></i></button></div>',
+      '<button class="video-fullscreen icon-button" title="Fullscreen global view" aria-label="Fullscreen global view"><i data-lucide="maximize"></i></button><a class="video-open icon-button" href="' + media(task.id, 'global') + '" target="_blank" rel="noopener" title="Open global video" aria-label="Open global video"><i data-lucide="arrow-up-right"></i></a></div>',
       '<p class="task-description">' + task.description + '</p><p class="media-error" role="status" hidden></p>',
     ].join('');
     document.querySelector('#physical-grid').append(this.root);
     this.global = this.root.querySelector('.global-video');
+    this.global.muted = true;
+    this.global.defaultMuted = true;
+    this.global.playsInline = true;
     this.button = this.root.querySelector('.video-play');
     this.seek = this.root.querySelector('.video-seek');
     this.track = this.root.querySelector('.wrist-track');
@@ -67,16 +78,28 @@ class CameraPlayer {
       pointerStart = undefined;
     });
     this.global.addEventListener('play', () => {
+      this.wantPlay = true;
       pauseOthers(this);
-      this.root.querySelector('.video-start').hidden = true;
-      setIcon(this.button, 'pause'); this.button.title = 'Pause synchronized cameras'; this.button.setAttribute('aria-label', this.button.title);
+      this.setState('loading');
+    });
+    this.global.addEventListener('playing', () => {
+      this.recovering = false;
+      this.wantPlay = true;
+      this.setState('playing');
+      if (this.errorOwner === 'global') this.root.querySelector('.media-error').hidden = true;
+      this.ensureWristSource();
       clearInterval(this.timer); this.timer = setInterval(() => this.sync(), 125);
       this.sync(true);
     });
+    this.global.addEventListener('waiting', () => {
+      if (this.wantPlay) this.setState('loading');
+      this.wrist?.pause();
+    });
     this.global.addEventListener('pause', () => {
+      if (this.recovering) return;
+      this.wantPlay = false;
       clearInterval(this.timer); this.wrist?.pause();
-      setIcon(this.button, 'play'); this.button.title = 'Play synchronized cameras'; this.button.setAttribute('aria-label', this.button.title);
-      this.root.querySelector('.video-start').hidden = false;
+      if (this.root.dataset.playback !== 'error') this.setState('paused');
     });
     this.global.addEventListener('ended', () => this.pause());
     this.global.addEventListener('seeked', () => this.sync(true));
@@ -84,7 +107,7 @@ class CameraPlayer {
       this.seek.value = this.global.duration ? this.global.currentTime/this.global.duration*1000 : 0;
       this.root.querySelector('.video-time').textContent = seconds(this.global.currentTime) + ' / ' + seconds(this.global.duration);
     });
-    this.global.addEventListener('error', () => this.error('The recording could not be loaded. Try playing it again.'));
+    this.global.addEventListener('error', () => this.sourceError(this.global));
     this.seek.addEventListener('input', () => {
       if (Number.isFinite(this.global.duration)) this.global.currentTime = +this.seek.value/1000*this.global.duration;
     });
@@ -93,45 +116,123 @@ class CameraPlayer {
       if (this.global.requestFullscreen) this.global.requestFullscreen().catch(() => {});
       else this.global.webkitEnterFullscreen?.();
     });
-    // Only posters approach the viewport; video bytes wait for an explicit play.
+    // Prepare only global metadata near the viewport. Wrist bytes wait for playback.
     const posterObserver = new IntersectionObserver(entries => {
       if (!entries[0].isIntersecting) return;
       this.global.poster = media(task.id, 'global', 'jpg');
-      this.renderWrists();
+      if (!this.track.firstElementChild) this.renderWrists();
+      if (!this.loaded) {
+        this.loaded = true;
+        this.loadSource(this.global, 'global', formats[0], 'metadata');
+      }
       posterObserver.disconnect();
     }, { rootMargin: '250px' });
     posterObserver.observe(this.root);
     new ResizeObserver(() => this.center()).observe(this.track.parentElement);
-    observePlayback(this.root, () => this.pause());
+    observePlayback(this.root, () => {
+      if (document.fullscreenElement !== this.global && !this.global.webkitDisplayingFullscreen) this.pause();
+    });
   }
-  error(message) {
+  setState(state) {
+    if (this.root.dataset.playback === state) return;
+    this.root.dataset.playback = state;
+    const active = state === 'loading' || state === 'playing';
+    this.root.querySelector('.video-start').hidden = active;
+    this.root.querySelector('.video-loading').hidden = state !== 'loading';
+    this.global.setAttribute('aria-busy', String(state === 'loading'));
+    setIcon(this.button, active ? 'pause' : 'play');
+    this.button.title = state === 'loading' ? 'Cancel loading' : active ? 'Pause synchronized cameras' : 'Play synchronized cameras';
+    this.button.setAttribute('aria-label', this.button.title);
+  }
+  error(message, owner = 'global') {
+    this.errorOwner = owner;
     const error = this.root.querySelector('.media-error'); error.textContent = message; error.hidden = false;
   }
   toggle() {
+    if (this.wantPlay || !this.global.paused) { this.pause(); return; }
     if (!this.loaded) {
       this.loaded = true;
-      this.global.src = media(this.task.id, 'global');
       this.renderWrists();
+      this.loadSource(this.global, 'global');
     }
-    if (this.global.error) this.global.load();
+    if (this.global.error) this.loadSource(this.global, 'global');
     this.root.querySelector('.media-error').hidden = true;
-    if (this.global.paused) {
-      this.global.play().catch(() => this.error('Playback could not start. Please try again.'));
-    } else this.pause();
+    this.wantPlay = true;
+    this.setState('loading');
+    this.requestPlay();
   }
-  pause() { this.global.pause(); this.wrist?.pause(); clearInterval(this.timer); }
+  requestPlay() {
+    const attempt = ++this.attempt;
+    this.global.play().catch(error => {
+      if (attempt !== this.attempt || !this.wantPlay || error.name === 'AbortError' || this.global.error) return;
+      this.wantPlay = false;
+      this.setState('error');
+      this.error('Playback was blocked. Use the video controls or open the global video.');
+    });
+  }
+  loadSource(video, view, format = formats[0], preload = 'auto') {
+    video.dataset.view = view;
+    video.dataset.format = format;
+    video.preload = preload;
+    video.src = media(this.task.id, view, format);
+    video.load();
+    if (video === this.global) this.root.querySelector('.video-open').href = video.src;
+  }
+  sourceError(video) {
+    if (video !== this.global && video !== this.wrist) return;
+    const next = formats[formats.indexOf(video.dataset.format)+1];
+    if (next) {
+      const resume = this.wantPlay;
+      if (video === this.global) { this.recovering = true; ++this.attempt; }
+      this.loadSource(video, video.dataset.view, next);
+      if (video === this.global && resume) this.requestPlay();
+      return;
+    }
+    if (video === this.global) {
+      this.recovering = false; this.wantPlay = false;
+      this.setState('error');
+      this.error('The recording could not be loaded. Retry playback or open the global video.');
+    } else {
+      this.root.querySelector('.wrist-loading').hidden = true;
+      this.error('The wrist view could not be loaded. The global video can still play; try another wrist camera.', 'wrist');
+    }
+  }
+  ensureWristSource() {
+    if (!this.wrist || this.wrist.getAttribute('src') || !this.loaded) return;
+    this.root.querySelector('.wrist-loading').hidden = false;
+    this.loadSource(this.wrist, 'wrist'+(this.index+1));
+  }
+  pause() {
+    ++this.attempt;
+    this.recovering = false; this.wantPlay = false;
+    this.global.pause(); this.wrist?.pause(); clearInterval(this.timer);
+    if (this.root.dataset.playback !== 'error') this.setState('paused');
+  }
   sync(force = false) {
     const video = this.wrist;
-    if (!video || video.readyState < 1) return;
+    if (!video || video.readyState < 1 || video.error) return;
+    if (this.global.paused || this.global.readyState < 3 || !this.wantPlay) {
+      video.pause();
+      if (force && !video.seeking && Math.abs(this.global.currentTime-video.currentTime)>.12) video.currentTime = this.global.currentTime;
+      return;
+    }
+    // Seek only on useful data, not on every timer tick while a stream buffers.
+    if (video.seeking || (!force && video.readyState < 3)) return;
     const offset = this.global.currentTime-video.currentTime;
-    if (!video.seeking && (force || Math.abs(offset)>.7)) video.currentTime = this.global.currentTime;
+    if (Math.abs(offset) > (force ? .12 : .7) && (force || performance.now()-(this.lastWristSeek || 0)>2000)) {
+      this.lastWristSeek = performance.now();
+      video.currentTime = this.global.currentTime;
+      return;
+    }
     const correction = !this.global.paused && !force && Math.abs(offset)>.035 ? Math.max(.9,Math.min(1.1,1+offset*.65)) : 1;
-    video.playbackRate = this.global.playbackRate*correction;
-    if (this.global.paused) video.pause(); else if (video.paused) play(video);
+    const rate = this.global.playbackRate*correction;
+    if (Math.abs(video.playbackRate-rate)>.005) video.playbackRate = rate;
+    if (video.paused) play(video);
   }
   renderWrists() {
-    if (this.wrist) { this.wrist.pause(); this.wrist.removeAttribute('src'); this.wrist.load(); }
+    if (this.wrist) { const old = this.wrist; this.wrist = null; old.pause(); old.removeAttribute('src'); old.load(); }
     this.track.replaceChildren();
+    this.root.querySelector('.wrist-loading').hidden = true;
     for (let slot=-1; slot<=1; slot++) {
       const camera = (this.index+slot+this.task.arms)%this.task.arms+1;
       const slide = document.createElement(slot ? 'button' : 'div');
@@ -144,16 +245,22 @@ class CameraPlayer {
       } else {
         const video = document.createElement('video'); video.playsInline = true; video.muted = true; video.preload = 'none'; video.poster = poster;
         video.setAttribute('aria-label', this.task.short+' wrist camera '+camera);
-        if (this.loaded) { video.src = media(this.task.id,'wrist'+camera); video.preload = 'auto'; }
-        video.addEventListener('loadedmetadata', () => this.sync(true));
-        video.addEventListener('canplay', () => this.sync(true), { once: true });
-        video.addEventListener('error', () => this.error('This wrist recording could not be loaded. Select another camera.'));
+        video.addEventListener('loadedmetadata', () => { if (this.wrist === video) this.sync(true); });
+        video.addEventListener('canplay', () => {
+          if (this.wrist !== video) return;
+          this.root.querySelector('.wrist-loading').hidden = true;
+          if (this.errorOwner === 'wrist') this.root.querySelector('.media-error').hidden = true;
+          this.sync(true);
+        }, { once: true });
+        video.addEventListener('seeked', () => { if (this.wrist === video) this.sync(); });
+        video.addEventListener('error', () => this.sourceError(video));
         slide.append(video); this.wrist = video;
       }
       this.track.append(slide);
     }
     this.root.querySelector('.wrist-counter').textContent = '0'+(this.index+1)+' / 0'+this.task.arms;
     this.center();
+    if (this.wantPlay && this.global.readyState >= 3) this.ensureWristSource();
   }
   center() {
     const slide = this.track.firstElementChild;
