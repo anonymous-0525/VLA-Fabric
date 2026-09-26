@@ -1,21 +1,21 @@
-# Project page
+# Project website
 
-`index.html` is a dependency-free static project page for GitHub Pages. Serve
-the `docs/` directory from the `main` branch; `.nojekyll` keeps the files
-unchanged. The page uses only local CSS and images and does not require a
-JavaScript build.
+GitHub Pages serves this directory from the main branch. The static document
+presents the paper in three chapters: interaction discovery, cross-backbone
+transfer, and team expansion. Figures and result tables do not depend on
+JavaScript; optional interactions are built from ../site-src.
 
-The overview, interaction-study, and cross-backbone diagrams are rasterized
-from the current VLA-Fabric manuscript figures. Task stills illustrate the
-simulation scene geometry; they are not all frames from the policies whose
-success rates appear beside them. The figure artwork is provisional and may
-be replaced without changing the site structure.
+Run npm run build at the repository root after JavaScript changes, then
+npm run preview to inspect the website. Node.js 22 or newer is required.
+The entry bundle is deliberately small; Three.js and the four-arm scene
+load separately after the document is interactive.
 
-The three bimanual rates on the page are the task-specific Eagle2-Fabric and
-pi0.5-Fabric results currently reported in the manuscript. The three
-larger-team rates are 200-condition frozen simulation evaluations. Checkpoint
-selection, evaluation conditions, and external prerequisites are described in
-the repository documentation. No physical-robot outcome is claimed here.
+The physical gallery uses a responsive 2-by-2 layout, with a synchronized
+global view and wrist carousel in each item. Simulation clips use a single
+four-column row on desktop. All videos are demand-loaded and playback pauses
+outside the viewport.
 
-To inspect locally, open `index.html` in a browser. The page uses relative
-paths so the same files work under the GitHub Pages repository prefix.
+See [media.md](media.md) for recording provenance, privacy processing,
+evaluation distinctions, and the browser validation procedure. Camera
+identifiers, private experiment paths, model weights, and raw wrist videos
+are not part of the website.

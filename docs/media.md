@@ -34,8 +34,9 @@ H.264 decoding. The hero uses 16-second excerpts, at their original speed.
 | Four-arm frame | pi0.5 Full evaluation rollout | Same task's Full / Independent evaluation |
 | Arch Building | Original global-camera demonstration replay | Separate policy evaluation, including low success |
 
-The visible source labels are intentional: demonstration clips are not claimed
-to be policy successes. `export_demo_video.py` extracts original camera frames
+The gallery presents clips as task illustrations, separately from quantitative
+policy results, with this source ledger linked below it. No per-video source
+badge is overlaid on the images. `export_demo_video.py` extracts original camera frames
 from an HDF5 trajectory using its timestamps. Videos do not substitute for
 aggregate trial results. The site reports the current manuscript's task results;
 shared-policy values use their own development evaluation protocol, not a
@@ -52,6 +53,26 @@ The sequence and signal pulses are an explanatory illustration, not a recorded
 policy execution or a measurement of network traffic. Hover or agent selection
 highlights the selected arm and both directions of its communication relations.
 Reduced-motion preferences pause the scene and disable background-video motion.
+The renderer loads separately from the document and navigation, runs at a
+capped 30 fps, uses direct lighting, and pauses when offscreen. Background
+video starts only after scene initialization. Physical camera streams load
+on explicit playback: only the global and selected wrist view decode, while
+the neighboring carousel views use posters. Only one task plays at a time.
+
+## Paper evidence
+
+The page follows discovery, cross-backbone transfer, and team expansion.
+Chapter links navigate to permanently visible sections, so figures and tables
+remain accessible without a tab-initialization dependency. Overview, design,
+transfer, and composition artwork are lossless WebP renderings of the current
+author-supplied PDFs. The original controlled-study graph is retained.
+
+Capability, fixed-weight removals, shared-policy development, simulation,
+and physical tables reproduce their respective manuscript tables. Removal
+batches keep their own Full references. Published external baseline values
+follow the manuscript's TwinVLA and RoboTwin leaderboard sources rather
+than local reproductions. Missing
+SingleVLA Scan capability remains unreported, not imputed.
 
 ## Build and inspect
 

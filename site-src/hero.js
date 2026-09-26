@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 export async function startScene(setIcon) {
   const container = document.querySelector('#robot-stage');
@@ -9,7 +8,8 @@ export async function startScene(setIcon) {
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' }); }
   catch { container.querySelector('.scene-status').textContent = 'Interactive scene unavailable'; return; }
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+  const mobile = matchMedia('(max-width: 760px)').matches;
+  renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1 : 1.25));
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -17,12 +17,8 @@ export async function startScene(setIcon) {
   container.append(renderer.domElement);
   renderer.domElement.setAttribute('aria-label', 'Four agents performing a coordinated frame installation');
   const scene = new THREE.Scene();
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const room = new RoomEnvironment();
-  const environment = pmrem.fromScene(room, .04);
-  scene.environment = environment.texture;
-  scene.environmentIntensity = .6;
-  room.dispose(); pmrem.dispose();
+  // Direct lighting avoids a synchronous PMREM cubemap bake on first load.
+  scene.add(new THREE.AmbientLight(0xd4e2e0, .7));
   scene.add(new THREE.HemisphereLight(0xcbe4eb, 0x72827d, 2.3));
   const key = new THREE.DirectionalLight(0xffffff, 3.2); key.position.set(-3, 8, 5); scene.add(key);
   const rim = new THREE.DirectionalLight(0x95c6d5, 1.8); rim.position.set(4, 4, -5); scene.add(rim);
@@ -63,6 +59,7 @@ export async function startScene(setIcon) {
     if (/worktop/i.test(object.material.name)) {
       object.material.color.set('#35464a'); object.material.roughness = .82;
     }
+    object.material.metalness = Math.min(object.material.metalness, .45);
     meshes.push(object);
   });
   arms.forEach((arm, index) => arm.traverse(node => { node.userData.agent = index; }));
@@ -92,6 +89,7 @@ export async function startScene(setIcon) {
     }
   }
   function highlight(index) {
+    if (selected === index) return;
     selected = index; container.dataset.selected = String(index);
     meshes.forEach(mesh => {
       if (mesh.userData.agent === undefined || !mesh.material.emissive) return;
@@ -111,8 +109,11 @@ export async function startScene(setIcon) {
     labels.forEach((label, index) => label.classList.toggle('selected', index === selected));
   }
   const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
+  let lastHover = 0;
   renderer.domElement.addEventListener('pointermove', event => {
     if (event.buttons || event.pointerType === 'touch') return;
+    if (performance.now()-lastHover < 45) return;
+    lastHover = performance.now();
     const r = renderer.domElement.getBoundingClientRect();
     pointer.set((event.clientX-r.left)/r.width*2-1, -(event.clientY-r.top)/r.height*2+1);
     raycaster.setFromCamera(pointer, camera);
@@ -128,32 +129,38 @@ export async function startScene(setIcon) {
   updatePause(); pause.addEventListener('click', () => { paused = !paused; updatePause(); });
   document.querySelector('#scene-reset').addEventListener('click', () => { controls.reset(); pinned = -1; highlight(-1); });
   new IntersectionObserver(entries => { visible = entries[0].isIntersecting; }, { threshold: .01 }).observe(container);
+  await renderer.compileAsync(scene, camera);
+  renderer.render(scene, camera);
   container.querySelector('.scene-poster').hidden = true; container.querySelector('.scene-status').hidden = true;
   container.dataset.ready = 'true';
-  let last = performance.now();
-  const point = new THREE.Vector3();
+  let last = performance.now(), lastLabels = 0;
+  const point = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  const framePosition = new THREE.Vector3(), stagePhase = document.querySelector('#scene-phase');
   const frame = model.getObjectByName('PROP_four_arm_frame');
   function draw(now) {
     requestAnimationFrame(draw);
+    if (!visible || document.hidden) { last = now; return; }
+    if (now-last < 1000/30) return;
     const dt = Math.min((now-last)/1000, .08); last = now;
-    if (!visible || document.hidden) return;
     if (!paused) { time += dt; mixer.update(dt); }
     controls.update();
     signals.forEach(signal => {
       const t = (time * .24 + signal.phase) % 1;
       signal.pulse.position.copy(signal.curve.getPoint(t));
-      signal.pulse.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), signal.curve.getTangent(t).normalize());
+      signal.pulse.quaternion.setFromUnitVectors(up, signal.curve.getTangent(t).normalize());
     });
-    arms.forEach((arm, index) => {
+    if (now-lastLabels > 100) arms.forEach((arm, index) => {
       arm.getWorldPosition(point); point.y += .2; point.z += .65; point.project(camera);
       labels[index].style.left = `${(point.x*.5+.5)*container.clientWidth}px`;
       labels[index].style.top = `${(-point.y*.5+.5)*container.clientHeight}px`;
     });
+    if (now-lastLabels > 100) lastLabels = now;
     const phase = time % 15;
-    document.querySelector('#scene-phase').textContent = phase < 5 ? 'Coordinated lift' : phase < 7 ? 'Shared alignment' : phase < 12 ? 'Synchronized lowering' : 'Reset';
+    const phaseText = phase < 5 ? 'Coordinated lift' : phase < 7 ? 'Shared alignment' : phase < 12 ? 'Synchronized lowering' : 'Reset';
+    if (stagePhase.textContent !== phaseText) stagePhase.textContent = phaseText;
     renderer.render(scene, camera);
     container.dataset.frame = String(Math.floor(time * 30));
-    if (frame) container.dataset.frameHeight = String(frame.getWorldPosition(new THREE.Vector3()).y);
+    if (frame) container.dataset.frameHeight = String(frame.getWorldPosition(framePosition).y);
   }
   requestAnimationFrame(draw);
 }
