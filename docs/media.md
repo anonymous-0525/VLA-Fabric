@@ -45,6 +45,9 @@ matched 200-condition comparison with the single-task rows.
 
 `static/models/four-arm.glb` is derived from the project-owned Blender scene.
 `export_scene.py` bakes joint motion and frame movement into a portable GLB.
+`optimize-scene.mjs` shares identical geometry/accessors without changing
+the node hierarchy and writes a losslessly compressed `.glb.gz`. Supported
+browsers decompress it locally; other browsers load the ordinary GLB.
 The sequence and signal pulses are an explanatory illustration, not a recorded
 policy execution or a measurement of network traffic. Hover or agent selection
 highlights the selected arm and both directions of its communication relations.
@@ -53,6 +56,7 @@ Reduced-motion preferences pause the scene and disable background-video motion.
 ## Build and inspect
 
 ```bash
+# Node.js 22 or newer
 npm ci
 npm run build
 npm run preview

@@ -51,7 +51,8 @@ and [`pi05/README.md`](pi05/README.md).
 ## Interactive project page
 
 The GitHub Pages source is in `docs/`; the Three.js scene and synchronized
-camera player are in `site-src/`. Local builds do not require the ML environments:
+camera player are in `site-src/`. Use Node.js 22 or newer; local builds do not
+require the ML environments:
 
 ```bash
 npm ci

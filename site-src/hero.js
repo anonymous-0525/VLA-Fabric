@@ -41,7 +41,17 @@ export async function startScene(setIcon) {
   }
   new ResizeObserver(resize).observe(container); resize();
   let gltf;
-  try { gltf = await new GLTFLoader().loadAsync('static/models/four-arm.glb'); }
+  try {
+    const loader = new GLTFLoader();
+    if ('DecompressionStream' in window) {
+      try {
+        const response = await fetch('static/models/four-arm.glb.gz');
+        if (!response.ok) throw new Error('Compressed model unavailable');
+        const buffer = await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+        gltf = await loader.parseAsync(buffer, '');
+      } catch { gltf = await loader.loadAsync('static/models/four-arm.glb'); }
+    } else gltf = await loader.loadAsync('static/models/four-arm.glb');
+  }
   catch { container.querySelector('.scene-status').textContent = 'Scene could not be loaded'; return; }
   const model = gltf.scene; scene.add(model);
   const arms = ['A', 'B', 'C', 'D'].map(letter => model.getObjectByName(`ARM_${letter}`));
