@@ -73,13 +73,10 @@ CUDA_VISIBLE_DEVICES="$GPU_ID" ./scripts/evaluate_paired200.sh \
 
 The multi-agent extension uses one process and one complete local policy per arm.
 See [`docs/multiarm-hpc.md`](../docs/multiarm-hpc.md) for StackCube, Frame
-Insertion, Arch Assembly, data auditing, target-HPC readiness, training, and
+Insertion, Arch Assembly, dataset preparation, training, and
 strict evaluation. GPU IDs are always explicit; no multi-arm launcher has a
-default device group. For a new four-GPU allocation, run
-`scripts/multiarm/run_four_agent_readiness.sh` before formal training; the
-default training scope checks Stage-1-to-Stage-2 transfer, same-stage restore,
-finite optimization, and process-specific memory without launching a formal
-run.
+default device group. Select a microbatch that fits the allocated devices and
+adjust accumulation to preserve the effective team batch.
 
 ## Tests
 

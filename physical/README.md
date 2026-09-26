@@ -23,5 +23,4 @@ upload a raw hardware configuration as part of an anonymous dataset release.
 
 The multi-agent policy computation lives in `pi05/src/pi05_fabric`. Deployment
 to a new robot requires its own calibrated action adapter, limits, emergency
-stop, and supervised hardware validation; the website animation is illustrative,
-not a robot-control program.
+stop, and supervised hardware validation.

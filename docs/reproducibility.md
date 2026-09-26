@@ -41,30 +41,32 @@ moving them to backbone-native boundaries:
   recomputed per layer and flow step using receiver-local projections.
 
 The protocol uses prediction horizon 50, execution horizon 25, and 10 flow
-steps. Four training processes use global batch 12. Common-first Stage 1 runs
+steps. The original Common-first recipe uses four training processes with global
+batch 12. Stage 1 runs
 10k updates; Stage 2 loads Stage-1 model weights and runs 40k updates with all
-three functions enabled. Exact settings are in
+three functions enabled. This is one fine-tuning recipe, not a requirement of
+the interaction architecture; the trainer also supports Full single-stage and
+independent fine-tuning. Exact settings for this recipe are in
 `pi05/configs/training/pi_native_v2_h50_4gpu.yaml`.
 
 ## Part III: multi-arm extension
 
 The shared N-agent implementation assigns one complete pi0.5 policy process to
 each role and preserves local observation and action ownership. StackCube uses
-three ranks with H50/E25 and ten flow steps. Its validated operating point is
+three ranks with H50/E25 and ten flow steps. The provided configuration uses
 team microbatch 6 with accumulation 3, giving global team batch 18. Common-only
 Stage 1 runs 10k updates and Full Stage 2 runs 50k updates.
 
 Frame Insertion and Arch Assembly use four ranks with the same horizon and flow
-protocol. B6A3 has passed a local four-rank training-path check for Frame
-Insertion, but formal four-agent training must still follow target-HPC
-Stage-1/Stage-2/restore/finite-optimization readiness testing. The checked-in
-readiness command records the target allocation and memory evidence without
-starting a formal run.
+protocol. Their provided configurations use team microbatch 6 and accumulation
+3. Adjust the microbatch and accumulation together to fit the available memory
+while preserving the effective team batch.
 Task and hardware contracts are under `pi05/configs/multiarm/`.
 
 ## Paired evaluation
 
-Both implementations preserve condition pairing between candidate models:
+Both implementations preserve condition pairing between candidate models.
+The original bimanual study uses:
 
 | Split | Condition IDs | Role |
 |---|---:|---|
@@ -74,11 +76,12 @@ Both implementations preserve condition pairing between candidate models:
 Environment initialization and model-side stochastic seeds are paired by
 condition ID. The evaluator rejects missing IDs, duplicates, non-finite outputs,
 and unexpected checkpoint metadata. See `configs/evaluation/paired200.yaml` in
-each package for the machine-readable protocol.
+each package for the machine-readable protocol. Larger-team and RoboTwin tasks
+use their task-specific condition ranges and evaluation configurations.
 
-## Deliberate exclusions
+## External artifacts
 
-The release includes focused three- and four-arm workflows but excludes
-RoboTwin2 pi0.5 adapters, NSPR/network profiling, private cluster schedulers,
-datasets, checkpoints, readiness records, and rollout outputs. Their absence is enforced by the root audit and
-scope tests.
+Datasets, pretrained weights, and simulator assets must be obtained separately;
+see [datasets.md](datasets.md) and [installation.md](installation.md). Training
+outputs and rollout archives are not bundled. Communication-efficiency/NSPR
+experiments are outside the scope of this repository.

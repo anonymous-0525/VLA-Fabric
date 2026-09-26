@@ -38,32 +38,14 @@ implementation studied separately.
 5. Consult [`docs/reproducibility.md`](docs/reproducibility.md) for the exact
    architecture matrix, stage protocol, and evaluation split.
 
-Run the lightweight release checks with:
+Check internal package dependencies with:
 
 ```bash
 python -m pytest -q tests
-python scripts/audit_release.py
 ```
 
 Backbone-specific tests are documented in [`eagle/README.md`](eagle/README.md)
 and [`pi05/README.md`](pi05/README.md).
-
-## Interactive project page
-
-The GitHub Pages source is in `docs/`; the Three.js scene and synchronized
-camera player are in `site-src/`. Use Node.js 22 or newer; local builds do not
-require the ML environments:
-
-```bash
-npm ci
-npm run build
-npm run preview
-# http://localhost:4173
-```
-
-The page includes the animated four-arm illustration, four real-robot recordings
-with synchronized privacy-filtered wrist views, and global-view simulation clips.
-See [`docs/media.md`](docs/media.md) for source distinctions, processing, and QA.
 
 ## Repository status
 

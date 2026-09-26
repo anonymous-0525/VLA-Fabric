@@ -2,13 +2,13 @@
 
 This release extends the pi0.5 VLA-Fabric implementation from two agents to one complete policy process per arm for three- and four-arm tasks. It supports a single host only: each agent rank owns one GPU, local observations, one role checkpoint shard, and one local action chunk. Cross-rank collectives carry only the configured Common, Private Prefix K/V, and peer-action representations.
 
-## Release Scope
+## Task Configurations
 
-| Team | Task | Task config | Hardware status |
-|---|---|---|---|
-| 3 agents | ThreeRobotsStackCube | `pi05/configs/multiarm/three_arm_stack_cube.yaml` | B6A3 validated, global team batch 18, maximum process peak 33,318 MiB |
-| 4 agents | Frame Insertion | `pi05/configs/multiarm/four_arm_frame_insertion.yaml` | B6A3 local training path validated, maximum process peak 33,328 MiB; target-HPC readiness required |
-| 4 agents | Arch Assembly | `pi05/configs/multiarm/four_arm_arch_assembly.yaml` | B6A3 candidate; target-HPC readiness required |
+| Team | Task | Task config |
+|---|---|---|
+| 3 agents | ThreeRobotsStackCube | `pi05/configs/multiarm/three_arm_stack_cube.yaml` |
+| 4 agents | Frame Insertion | `pi05/configs/multiarm/four_arm_frame_insertion.yaml` |
+| 4 agents | Arch Assembly | `pi05/configs/multiarm/four_arm_arch_assembly.yaml` |
 
 The code does not claim cross-node execution. Datasets, base checkpoints, MuJoCo assets, RoboFactory, robosuite, logs, and trained role checkpoints are external artifacts.
 
@@ -86,41 +86,13 @@ sha256sum "$(basename "$FOUR_ARM_DATASET")" "$(basename "$FOUR_ARM_QUANTILES")" 
 export FOUR_ARM_AUDIT_MANIFEST=$PWD/converted_sha256.txt
 ```
 
-The B6A3 operating point has passed a local four-rank training-path check on
-Frame Insertion. That check covered finite and synchronized Stage-1 training,
-Stage-1 checkpoint transfer into Full Stage 2, and process-specific memory
-measurement. It observed 41 stable Stage-1 steps, a compact Stage-1-to-Stage-2
-checkpoint gate, two Full-interaction Stage-2 steps, and a maximum process peak
-of 33,328 MiB. It did not complete a same-stage restore or closed-loop rollout,
-and it is not evidence for a different HPC allocation.
-
-Run the portable readiness gate before formal training on each target machine.
-`GPU_IDS` has no default and must contain exactly four distinct devices assigned
-to the job. The default `training` scope runs short Stage 1 and Stage 2 jobs,
-loads the complete Stage-1 team checkpoint, resumes Stage 2 for one additional
-step, checks finite four-rank optimization evidence, and audits process-specific
-NVML and JAX memory peaks against the configured gate. It writes
-`readiness_summary.json` but never starts formal training.
+Choose four allocated devices explicitly. The example uses team microbatch 6
+and accumulation 3 (effective team batch 18). Check memory use on the target
+machine before a long run; smaller equivalent-batch configurations are listed
+in `pi05/configs/multiarm/four_gpu_agent_parallel.yaml`.
 
 ```bash
 export GPU_IDS=1,2,3,4
-export READINESS_SCOPE=training
-export READINESS_ROOT=$OUTPUT_ROOT/readiness/frame_insertion_b6a3
-export TEAM_MICROBATCH=6
-export ACCUMULATION=3
-pi05/scripts/multiarm/run_four_agent_readiness.sh
-```
-
-Use `READINESS_SCOPE=full` only when the external MuJoCo environment is also
-available. This adds a two-condition closed-loop smoke and requires
-`FOUR_ARM_ENV_PYTHON`, `MULTIARM_ENV_ROOT`, and `ROBOSUITE_ROOT`. A
-`PASS_TRAINING_PATH` summary authorizes the selected batch for training on that
-machine; `PASS_FULL` additionally records the rollout smoke.
-
-After the target-HPC training gate passes, keep the selected batch explicit for
-the formal stages:
-
-```bash
 export TEAM_MICROBATCH=6
 export ACCUMULATION=3
 pi05/scripts/multiarm/train_four_arm_stage1.sh
@@ -148,5 +120,3 @@ JAX_PLATFORMS=cpu \
 PYTHONPATH=pi05/src:$OPENPI_ROOT/src \
 $PYTHON_BIN -m pytest -q pi05/tests
 ```
-
-Run `python scripts/audit_release.py` before transferring the repository. It rejects private paths, generated artifacts, historical RoboTwin2 modules, checkpoints, datasets, and logs.

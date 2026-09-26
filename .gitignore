@@ -10,8 +10,12 @@ __pycache__/
 htmlcov/
 
 .venv/
+.venv-*/
 venv/
 env/
+.env
+.env.*
+.DS_Store
 
 /outputs/
 /runs/
@@ -22,9 +26,11 @@ env/
 /data/
 /external/
 eagle/outputs/
+eagle/data/
 eagle/checkpoints/
 eagle/external/
 pi05/outputs/
+pi05/data/
 pi05/checkpoints/
 pi05/external/
 
@@ -33,3 +39,25 @@ pi05/external/
 *.pth
 *.safetensors
 *.orig
+
+# Local publication and media-production tools are not research artifacts.
+/local-maintenance/
+/site-src/
+/scripts/
+/package.json
+/package-lock.json
+/docs/README.md
+/docs/media.md
+/docs/static/media/media-processing.json
+/tests/test_project_site.py
+/tests/test_release_layout.py
+/tests/test_multiarm_layout.py
+/tests/test_release_audit.py
+/tests/test_audit_multiarm.py
+/eagle/tests/test_release_scope.py
+/pi05/tests/test_release_scope.py
+/pi05/tests/test_multiarm_release_scope.py
+/pi05/tests/test_four_gpu_readiness.py
+/pi05/scripts/multiarm/run_four_agent_readiness.sh
+/pi05/scripts/multiarm/monitor_gpu_memory.sh
+/pi05/scripts/multiarm/audit_four_agent_memory.py
